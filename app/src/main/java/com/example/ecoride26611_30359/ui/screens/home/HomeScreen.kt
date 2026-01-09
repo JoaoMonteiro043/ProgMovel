@@ -1,14 +1,10 @@
 package com.example.ecoride26611_30359.ui.screens.home
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,21 +14,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.ecoride26611_30359.R
 import com.example.ecoride26611_30359.navigation.AppRoutes
-import androidx.compose.material3.*
-import androidx.compose.runtime.getValue
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.EmojiEvents
 
 @Composable
-fun HomeScreen(navController: NavHostController) {
-
+fun HomeScreen(
+    navController: NavHostController,
+    viewModel: HomeViewModel = viewModel() // Injeção do ViewModel
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -43,20 +34,25 @@ fun HomeScreen(navController: NavHostController) {
 
         Spacer(modifier = Modifier.height(30.dp))
 
+        // Agora o nome é dinâmico vindo do ViewModel
         Text(
-            text = "BEM-VINDO",
-            fontSize = 32.sp,
+            text = "BEM-VINDO, ${viewModel.userName.uppercase()}",
+            fontSize = 28.sp,
             fontWeight = FontWeight.Bold
         )
 
         Spacer(modifier = Modifier.height(100.dp))
 
-        // Card Criar Viagem
+        // Card Criar Viagem (Condutor)
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(180.dp)
-                .clickable { navController.navigate(AppRoutes.DashboardDriver.route) },
+                .clickable {
+                    viewModel.onNavigateToDriver {
+                        navController.navigate(AppRoutes.DashboardDriver.route)
+                    }
+                },
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9))
         ) {
@@ -77,12 +73,16 @@ fun HomeScreen(navController: NavHostController) {
 
         Spacer(modifier = Modifier.height(25.dp))
 
-        // Card Procurar Viagem
+        // Card Procurar Viagem (Passageiro)
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(180.dp)
-                .clickable { navController.navigate(AppRoutes.DashboardPassenger.route) },
+                .clickable {
+                    viewModel.onNavigateToPassenger {
+                        navController.navigate(AppRoutes.DashboardPassenger.route)
+                    }
+                },
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD))
         ) {
@@ -102,5 +102,3 @@ fun HomeScreen(navController: NavHostController) {
         }
     }
 }
-
-
