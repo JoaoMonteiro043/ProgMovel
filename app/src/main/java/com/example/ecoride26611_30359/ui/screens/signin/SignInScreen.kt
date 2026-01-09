@@ -3,10 +3,7 @@ package com.example.ecoride26611_30359.ui.screens.signin
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,18 +14,15 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ecoride26611_30359.navigation.AppRoutes
 import androidx.navigation.NavHostController
 
-
-
 @Composable
-fun SignInScreen(navController: NavHostController) {
-
-    var name by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-
+fun SignInScreen(
+    navController: NavHostController,
+    viewModel: SignInViewModel = viewModel() // Injeção do ViewModel
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -36,7 +30,6 @@ fun SignInScreen(navController: NavHostController) {
             .padding(top = 80.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
         Text(
             text = "EcoRide",
             fontSize = 36.sp,
@@ -61,20 +54,20 @@ fun SignInScreen(navController: NavHostController) {
 
         Spacer(modifier = Modifier.height(35.dp))
 
-        // Nome
+        // Nome - Ligado ao ViewModel
         OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
+            value = viewModel.name,
+            onValueChange = { viewModel.onNameChange(it) },
             label = { Text("Nome") },
             modifier = Modifier.fillMaxWidth(),
         )
 
         Spacer(modifier = Modifier.height(15.dp))
 
-        // Email
+        // Email - Ligado ao ViewModel
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
+            value = viewModel.email,
+            onValueChange = { viewModel.onEmailChange(it) },
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
@@ -82,10 +75,10 @@ fun SignInScreen(navController: NavHostController) {
 
         Spacer(modifier = Modifier.height(15.dp))
 
-        // Password
+        // Password - Ligado ao ViewModel
         OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
+            value = viewModel.password,
+            onValueChange = { viewModel.onPasswordChange(it) },
             label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
@@ -93,8 +86,13 @@ fun SignInScreen(navController: NavHostController) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        // Botão Criar Conta - Chama a lógica do ViewModel
         Button(
-            onClick = { navController.navigate(AppRoutes.Home.route) },
+            onClick = {
+                viewModel.performSignIn {
+                    navController.navigate(AppRoutes.Home.route)
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
@@ -109,7 +107,7 @@ fun SignInScreen(navController: NavHostController) {
             text = "Já tem conta? Entrar!",
             color = Color(0xFF1E88E5),
             fontSize = 15.sp,
-                    modifier = Modifier.clickable {
+            modifier = Modifier.clickable {
                 navController.navigate(route = AppRoutes.Login.route)
             }
         )
