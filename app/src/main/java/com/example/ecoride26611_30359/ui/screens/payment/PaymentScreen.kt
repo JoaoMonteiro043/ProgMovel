@@ -11,21 +11,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.ecoride26611_30359.navigation.AppRoutes
 
 @Composable
-fun PaymentScreen(navController: NavHostController, from: String?) {
-
-    val paymentMethods = listOf(
-        "Cartão de Crédito",
-        "PayPal",
-        "MbWay",
-        "Google Pay"
-    )
-
-    var selectedPayment by remember { mutableStateOf<String?>(null) }
-
+fun PaymentScreen(
+    navController: NavHostController,
+    from: String?,
+    viewModel: PaymentViewModel = viewModel() // Injeção do ViewModel
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -33,7 +28,6 @@ fun PaymentScreen(navController: NavHostController, from: String?) {
             .padding(top = 60.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
         Text(
             text = "Formas de Pagamento",
             fontSize = 22.sp,
@@ -51,42 +45,44 @@ fun PaymentScreen(navController: NavHostController, from: String?) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Lista de métodos de pagamento
-        paymentMethods.forEach { method ->
+        // Lista de métodos vinda do ViewModel
+        viewModel.paymentMethods.forEach { method ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 15.dp)
-                    .height(50.dp)
-                    .background(Color(0xFFE0E0E0), shape = MaterialTheme.shapes.small)
-                    .clickable { selectedPayment = method }
+                    .padding(vertical = 8.dp)
+                    .height(55.dp)
+                    .background(
+                        color = if (viewModel.selectedPayment == method) Color(0xFFEEEEEE) else Color(0xFFF5F5F5),
+                        shape = MaterialTheme.shapes.small
+                    )
+                    .clickable { viewModel.onPaymentMethodSelected(method) }
                     .padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(method, fontSize = 16.sp)
+                Text(text = method, fontSize = 16.sp)
                 RadioButton(
-                    selected = selectedPayment == method,
-                    onClick = { selectedPayment = method }
+                    selected = (viewModel.selectedPayment == method),
+                    onClick = { viewModel.onPaymentMethodSelected(method) }
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(240.dp))
+        // Spacer flexível para empurrar os botões para o fundo
+        Spacer(modifier = Modifier.weight(1f))
 
-        // Botões
+        // Botões de Ação
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 20.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-
             Button(
                 onClick = {
-                    if (from == "driver") {
-                        navController.navigate(AppRoutes.CheckoutDriver.route)
-                    } else {
-                        navController.navigate(AppRoutes.CheckoutPassenger.route)
-                    }
+                    val route = viewModel.getBackRoute(from)
+                    navController.navigate(route)
                 },
                 modifier = Modifier
                     .weight(1f)
@@ -99,10 +95,11 @@ fun PaymentScreen(navController: NavHostController, from: String?) {
 
             Button(
                 onClick = {
-                    // 📌 Futuro: Confirmação de pagamento
-                    navController.navigate(AppRoutes.Home.route)
+                    viewModel.confirmPayment {
+                        navController.navigate(AppRoutes.Home.route)
+                    }
                 },
-                enabled = selectedPayment != null,
+                enabled = viewModel.selectedPayment != null,
                 modifier = Modifier
                     .weight(1f)
                     .height(50.dp)
