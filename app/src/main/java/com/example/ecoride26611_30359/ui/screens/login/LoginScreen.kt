@@ -1,6 +1,6 @@
 package com.example.ecoride26611_30359.ui.screens.login
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -14,19 +14,19 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.clickable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.ecoride26611_30359.navigation.AppRoutes
 
 @Composable
-fun LoginScreen(navController: NavHostController) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-
+fun LoginScreen(
+    navController: NavHostController,
+    viewModel: LoginViewModel = viewModel() // Injetamos o ViewModel aqui
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            . padding(horizontal = 30.dp)
+            .padding(horizontal = 30.dp)
             .padding(top = 150.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -46,21 +46,21 @@ fun LoginScreen(navController: NavHostController) {
 
         Spacer(modifier = Modifier.height(50.dp))
 
-        //Email
+        // Email ligado ao ViewModel
         OutlinedTextField(
-            value = email,
-            onValueChange = {email = it},
-            label = {Text("email@dominio.com")},
+            value = viewModel.email,
+            onValueChange = { viewModel.onEmailChange(it) },
+            label = { Text("email@dominio.com") },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
         )
 
         Spacer(modifier = Modifier.height(15.dp))
 
-        //Password
+        // Password ligada ao ViewModel
         OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
+            value = viewModel.password,
+            onValueChange = { viewModel.onPasswordChange(it) },
             label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
@@ -68,9 +68,13 @@ fun LoginScreen(navController: NavHostController) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        //Botão Coninuar
+        // Botão Continuar com lógica no ViewModel
         Button(
-            onClick = {navController.navigate(AppRoutes.Home.route)},
+            onClick = {
+                viewModel.onLoginClick {
+                    navController.navigate(AppRoutes.Home.route)
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
@@ -80,7 +84,7 @@ fun LoginScreen(navController: NavHostController) {
         }
 
         Spacer(modifier = Modifier.height(20.dp))
-        
+
         Text(
             text = "Não tens conta? Criar conta!",
             color = Color.Blue,
@@ -98,7 +102,5 @@ fun LoginScreen(navController: NavHostController) {
             color = Color.Gray,
             textAlign = TextAlign.Center
         )
-
     }
-
 }
