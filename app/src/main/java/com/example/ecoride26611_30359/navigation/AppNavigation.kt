@@ -49,15 +49,24 @@ fun AppNavigation(navController: NavHostController) {
         composable(AppRoutes.DashboardPassenger.route) { DashboardPassengerScreen(navController) }
         composable(AppRoutes.CheckoutDriver.route) { CheckoutDriverScreen(navController) }
         composable(AppRoutes.CheckoutPassenger.route) { CheckoutPassengerScreen(navController) }
+
         composable(AppRoutes.Payment.route + "?from={from}") { backStackEntry ->
             val from = backStackEntry.arguments?.getString("from")
             PaymentScreen(navController, from)
         }
 
         composable(AppRoutes.Chat.route) { ChatScreen(navController) }
-        composable(AppRoutes.Messages.route) { MessagesScreen() }
+
+        // CORREÇÃO AQUI: Passar o navController para o MessagesScreen
+        composable(AppRoutes.Messages.route) {
+            MessagesScreen(navController = navController)
+        }
 
         composable(AppRoutes.Profile.route) { ProfileScreen(navController) }
-        composable(AppRoutes.Achievements.route) { AchievementsScreen() }
+
+        // OPCIONAL: Se o AchievementsScreen também precisar de voltar atrás, passe o navController lá também
+        composable(AppRoutes.Achievements.route) {
+            AchievementsScreen()
+        }
     }
 }

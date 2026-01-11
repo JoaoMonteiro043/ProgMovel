@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -16,10 +18,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.ecoride26611_30359.R
-import com.example.ecoride26611_30359.navigation.AppRoutes
+import com.example.ecoride26611_30359.navigation.AppRoutes // Importante para as rotas
 
+// Modelo de dados
 data class ChatMessage(
     val name: String,
     val time: String,
@@ -28,16 +32,12 @@ data class ChatMessage(
 )
 
 @Composable
-fun ChatScreen(navController: NavHostController) {
-
-    val messages = listOf(
-        ChatMessage("Ana", "1d", "Temos de combinar um café", R.drawable.girl),
-        ChatMessage("Miguel", "1d", "A que horas começa?", R.drawable.boy),
-        ChatMessage("Joana", "2d", "Feliz aniversário!!! 🎉", R.drawable.girl),
-        ChatMessage("Inês", "3d", "A Rita não pode vir?", R.drawable.girl),
-        ChatMessage("Luís", "4d", "Vou em setembro. E você?", R.drawable.boy),
-        ChatMessage("Nuno", "5d", "Votaste no Chega? A sério..", R.drawable.boy)
-    )
+fun ChatScreen(
+    navController: NavHostController,
+    viewModel: ChatViewModel = viewModel()
+) {
+    // Observa o estado vindo do ViewModel
+    val uiState by viewModel.uiState.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
 
@@ -48,24 +48,32 @@ fun ChatScreen(navController: NavHostController) {
             modifier = Modifier.padding(bottom = 20.dp)
         )
 
-        LazyColumn {
-            items(messages) { message ->
-                ChatItem(message)
-                Divider(color = Color.LightGray.copy(alpha = 0.3f))
+        if (uiState.isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            LazyColumn {
+                items(uiState.messages) { message ->
+                    ChatItem(message) {
+                        // CORREÇÃO: Chama o navController para ir para o ecrã de mensagens
+                        navController.navigate(AppRoutes.Messages.route)
+                    }
+                    HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
+                }
             }
         }
     }
 }
 
 @Composable
-fun ChatItem(message: ChatMessage) {
+fun ChatItem(message: ChatMessage, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 10.dp)
-            .clickable { }
+            .clickable { onClick() } // O clique aqui dispara a navegação acima
     ) {
-
         // FOTO
         Image(
             painter = painterResource(id = message.image),
@@ -84,8 +92,12 @@ fun ChatItem(message: ChatMessage) {
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(message.time, fontSize = 12.sp, color = Color.Gray)
             }
-            Text(message.messagePreview, fontSize = 14.sp, color = Color.DarkGray)
+            Text(
+                text = message.messagePreview,
+                fontSize = 14.sp,
+                color = Color.DarkGray,
+                maxLines = 1
+            )
         }
-
     }
 }

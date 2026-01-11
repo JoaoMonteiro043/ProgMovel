@@ -1,12 +1,11 @@
 package com.example.ecoride26611_30359.ui.screens.passenger
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -14,18 +13,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.ecoride26611_30359.navigation.AppRoutes
 
 @Composable
-fun DashboardPassengerScreen(navController: NavHostController) {
+fun DashboardPassengerScreen(
+    navController: NavHostController,
+    viewModel: DashboardPassengerViewModel = viewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
 
-    var filters by remember { mutableStateOf("") }
-    var preferences by remember { mutableStateOf("") }
-
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-
-        // Top Bar + Back Button
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        // Top Bar
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { navController.navigate(AppRoutes.Home.route) }) {
                 Icon(
@@ -33,9 +38,7 @@ fun DashboardPassengerScreen(navController: NavHostController) {
                     contentDescription = "Voltar"
                 )
             }
-
             Spacer(modifier = Modifier.width(8.dp))
-
             Text(
                 text = "Procurar Viagem",
                 fontSize = 22.sp,
@@ -45,81 +48,81 @@ fun DashboardPassengerScreen(navController: NavHostController) {
 
         Spacer(modifier = Modifier.height(30.dp))
 
-        // Campo ORIGEM
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-                .clickable { }
-                .padding(horizontal = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("Origem", modifier = Modifier.weight(1f))
-            Text("Pesquisar origem", color = Color.Gray)
+        // Mensagem de Erro
+        uiState.errorMessage?.let {
+            Text(
+                text = it,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(bottom = 16.dp),
+                fontWeight = FontWeight.SemiBold
+            )
         }
 
-        Divider()
+        // Campo ORIGEM
+        OutlinedTextField(
+            value = uiState.origem,
+            onValueChange = { viewModel.updateOrigem(it) },
+            label = { Text("Origem *") },
+            placeholder = { Text("Ex: Lisboa") },
+            modifier = Modifier.fillMaxWidth(),
+            isError = uiState.errorMessage != null && uiState.origem.isBlank()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Campo DESTINO
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-                .clickable { }
-                .padding(horizontal = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("Destino", modifier = Modifier.weight(1f))
-            Text("Pesquisar destino", color = Color.Gray)
-        }
+        OutlinedTextField(
+            value = uiState.destino,
+            onValueChange = { viewModel.updateDestino(it) },
+            label = { Text("Destino *") },
+            placeholder = { Text("Ex: Porto") },
+            modifier = Modifier.fillMaxWidth(),
+            isError = uiState.errorMessage != null && uiState.destino.isBlank()
+        )
 
-        Divider()
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Campo DATA E HORA (Fixo Simples)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(60.dp)
-                .clickable { }
-                .padding(horizontal = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("Data e Hora", modifier = Modifier.weight(1f))
-            Text("12:00   25/11/2030", color = Color.Gray)
-        }
+        // Campo DATA E HORA
+        OutlinedTextField(
+            value = uiState.dataHora,
+            onValueChange = { viewModel.updateDataHora(it) },
+            label = { Text("Data e Hora") },
+            modifier = Modifier.fillMaxWidth()
+        )
 
-        Divider()
-
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         // Filtros Opcionais
-        Text("Filtros Opcionais")
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(40.dp)
-                .padding(vertical = 6.dp)
-                .background(Color(0xFFDDDDDD), RoundedCornerShape(6.dp))
+        Text("Filtros Opcionais", fontWeight = FontWeight.Bold)
+        OutlinedTextField(
+            value = uiState.filtros,
+            onValueChange = { viewModel.updateFiltros(it) },
+            placeholder = { Text("Ex: Ar condicionado, sem fumadores") },
+            modifier = Modifier.fillMaxWidth(),
+            maxLines = 2
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Preferências
-        Text("Preferências")
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(40.dp)
-                .padding(vertical = 6.dp)
-                .background(Color(0xFFDDDDDD), RoundedCornerShape(6.dp))
+        Text("Preferências", fontWeight = FontWeight.Bold)
+        OutlinedTextField(
+            value = uiState.preferencias,
+            onValueChange = { viewModel.updatePreferencias(it) },
+            placeholder = { Text("Ex: Gosto de conversar, música calma") },
+            modifier = Modifier.fillMaxWidth(),
+            maxLines = 2
         )
 
-        Spacer(modifier = Modifier.height(250.dp))
+        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(32.dp))
 
         // Botão Procurar
         Button(
             onClick = {
-                navController.navigate(AppRoutes.CheckoutPassenger.route)
+                viewModel.procurarViagem {
+                    navController.navigate(AppRoutes.CheckoutPassenger.route)
+                }
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -128,5 +131,7 @@ fun DashboardPassengerScreen(navController: NavHostController) {
         ) {
             Text("Procurar!", color = Color.White, fontSize = 18.sp)
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
