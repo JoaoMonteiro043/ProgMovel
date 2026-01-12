@@ -1,29 +1,45 @@
 package com.example.ecoride26611_30359.ui.screens.profile
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.ecoride26611_30359.data.local.AppDatabase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-class ProfileViewModel : ViewModel() {
+class ProfileViewModel(application: Application) : AndroidViewModel(application) {
 
-    // Movi a data class para aqui dentro para o ficheiro ser lido como uma única Classe
+    private val userDao = AppDatabase.getDatabase(application).userDao()
+
     data class ProfileUiState(
-        val userName: String = "Alfredo Martins",
-        val userEmail: String = "alfredo.martins@email.com",
-        val userRating: Double = 4.7,
-        val profileImageRes: Int? = null
+        val userName: String = "A carregar...",
+        val userEmail: String = "",
+        val userRating: Double = 5.0,
+        val isLoading: Boolean = true
     )
 
-    // Estado privado (mutável) e público (apenas leitura)
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
-    /**
-     * Lógica para realizar logout.
-     */
+    fun loadUserProfile(userId: Int) {
+        if (userId == -1) return
+
+        viewModelScope.launch {
+            val user = userDao.getUserById(userId)
+            user?.let { u ->
+                _uiState.update { it.copy(
+                    userName = u.name,
+                    userEmail = u.email,
+                    isLoading = false
+                ) }
+            }
+        }
+    }
+
     fun onLogout(onSuccess: () -> Unit) {
-        // No futuro: Firebase.auth.signOut()
         onSuccess()
     }
 }

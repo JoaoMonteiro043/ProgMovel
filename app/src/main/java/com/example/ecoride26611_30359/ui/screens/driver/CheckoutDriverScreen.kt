@@ -2,16 +2,16 @@ package com.example.ecoride26611_30359.ui.screens.driver
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -28,113 +28,89 @@ fun CheckoutDriverScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp)
-            .padding(top = 25.dp),
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Text("Resumo da Viagem Criada", fontSize = 22.sp, fontWeight = FontWeight.Bold)
 
-        // Title
-        Text(
-            text = "Checkout / Detalhes da Viagem",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Reintrodução da Imagem do Mapa
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 10.dp),
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // MAPA
-        Image(
-            painter = painterResource(id = uiState.mapaImagem),
-            contentDescription = "Mapa",
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(uiState.tempoEstimado)
-            Text(uiState.distancia)
-            Text("Chegada: ${uiState.horaChegada}")
-        }
-
-        Spacer(modifier = Modifier.height(30.dp))
-
-        // Informações do passageiro
-        Text("Passageiro: ${uiState.nomePassageiro}", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Image(
-            painter = painterResource(id = uiState.fotoPassageiro),
-            contentDescription = "Passageiro",
-            modifier = Modifier.size(80.dp)
-        )
-
-        Spacer(modifier = Modifier.height(40.dp))
-
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Column {
-                Text("Hora:", fontWeight = FontWeight.Bold)
-                Text("${uiState.horaPartida}   |   ${uiState.dataViagem}")
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text("Ponto de encontro:", fontWeight = FontWeight.Bold)
-                Text(uiState.pontoEncontro)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(40.dp))
-
-        // Botão Detalhes Passageiro
-        Button(
-            onClick = { /* Popup futuro */ },
-            modifier = Modifier
-                .width(220.dp)
-                .height(45.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray)
+                .height(200.dp),
+            shape = MaterialTheme.shapes.medium
         ) {
-            Text("Detalhes Passageiro", color = Color.Black)
+            Image(
+                painter = painterResource(id = uiState.mapaImagem),
+                contentDescription = "Mapa do percurso",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
         }
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        // Botões Aceitar / Declinar
-        Row(
+        // Card com Detalhes (Lê do Room)
+        Card(
             modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(text = "Itinerário", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text("De: ${uiState.origem}", fontWeight = FontWeight.SemiBold)
+                Text("Para: ${uiState.destino}", fontWeight = FontWeight.SemiBold)
+
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text("Distância", color = Color.Gray, fontSize = 12.sp)
+                        Text(uiState.distancia, fontWeight = FontWeight.Bold)
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("Tempo Estimado", color = Color.Gray, fontSize = 12.sp)
+                        Text(uiState.tempoEstimado, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(1f)) // Empurra os botões para baixo
+
+        // Botões de Ação
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Button(
-                onClick = {
-                    viewModel.acceptRequest {
-                        navController.navigate(AppRoutes.Payment.route)
-                    }
-                },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+            OutlinedButton(
+                onClick = { navController.popBackStack() },
+                modifier = Modifier.weight(1f).height(50.dp)
             ) {
-                Text("Accept", color = Color.White)
+                Text("Editar")
             }
 
             Button(
                 onClick = {
-                    viewModel.declineRequest {
-                        navController.navigate(AppRoutes.DashboardDriver.route)
+                    viewModel.confirmarViagem {
+                        navController.navigate(AppRoutes.Home.route)
                     }
                 },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
+                modifier = Modifier.weight(1f).height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
             ) {
-                Text("Decline", color = Color.White)
+                Text("Confirmar", color = Color.White)
             }
         }
     }

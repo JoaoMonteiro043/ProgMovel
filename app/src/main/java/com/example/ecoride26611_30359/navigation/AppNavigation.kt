@@ -1,9 +1,13 @@
 package com.example.ecoride26611_30359.navigation
 
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
 import com.example.ecoride26611_30359.ui.screens.login.LoginScreen
 import com.example.ecoride26611_30359.ui.screens.signin.SignInScreen
@@ -35,38 +39,57 @@ sealed class AppRoutes(val route: String) {
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
+    var loggedUserId by remember { mutableStateOf(-1) }
 
     NavHost(
         navController = navController,
         startDestination = AppRoutes.Login.route
     ) {
+        composable(AppRoutes.Login.route) {
+            LoginScreen(
+                navController = navController,
+                onLoginSuccess = { userId ->
+                    loggedUserId = userId
+                }
+            )
+        }
 
-        composable(AppRoutes.Login.route) { LoginScreen(navController) }
         composable(AppRoutes.SignIn.route) { SignInScreen(navController) }
         composable(AppRoutes.Home.route) { HomeScreen(navController) }
 
-        composable(AppRoutes.DashboardDriver.route) { DashboardDriverScreen(navController) }
+        composable(AppRoutes.DashboardDriver.route) {
+            DashboardDriverScreen(navController, loggedUserId)
+        }
+
         composable(AppRoutes.DashboardPassenger.route) { DashboardPassengerScreen(navController) }
         composable(AppRoutes.CheckoutDriver.route) { CheckoutDriverScreen(navController) }
-        composable(AppRoutes.CheckoutPassenger.route) { CheckoutPassengerScreen(navController) }
 
-        composable(AppRoutes.Payment.route + "?from={from}") { backStackEntry ->
+        composable(
+            route = AppRoutes.CheckoutPassenger.route + "/{tripId}",
+            arguments = listOf(navArgument("tripId") { type = NavType.IntType })
+        ) {
+            CheckoutPassengerScreen(navController)
+        }
+
+        composable(
+            route = AppRoutes.Payment.route + "?from={from}",
+            arguments = listOf(navArgument("from") {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = "home"
+            })
+        ) { backStackEntry ->
             val from = backStackEntry.arguments?.getString("from")
             PaymentScreen(navController, from)
         }
 
         composable(AppRoutes.Chat.route) { ChatScreen(navController) }
+        composable(AppRoutes.Messages.route) { MessagesScreen(navController = navController) }
 
-        // CORREÇÃO AQUI: Passar o navController para o MessagesScreen
-        composable(AppRoutes.Messages.route) {
-            MessagesScreen(navController = navController)
+        composable(AppRoutes.Profile.route) {
+            ProfileScreen(navController, loggedUserId)
         }
 
-        composable(AppRoutes.Profile.route) { ProfileScreen(navController) }
-
-        // OPCIONAL: Se o AchievementsScreen também precisar de voltar atrás, passe o navController lá também
-        composable(AppRoutes.Achievements.route) {
-            AchievementsScreen()
-        }
+        composable(AppRoutes.Achievements.route) { AchievementsScreen() }
     }
 }

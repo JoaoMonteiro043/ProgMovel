@@ -2,16 +2,13 @@ package com.example.ecoride26611_30359.ui.screens.login
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -21,43 +18,30 @@ import com.example.ecoride26611_30359.navigation.AppRoutes
 @Composable
 fun LoginScreen(
     navController: NavHostController,
-    viewModel: LoginViewModel = viewModel() // Injetamos o ViewModel aqui
+    viewModel: LoginViewModel = viewModel(),
+    onLoginSuccess: (Int) -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 30.dp)
-            .padding(top = 150.dp),
+            .padding(top = 100.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(60.dp))
+        Text("EcoRide", fontSize = 36.sp, fontWeight = FontWeight.Bold)
+        Text("Faça login na sua conta!", color = Color.Gray)
 
-        Text(
-            "EcoRide",
-            fontSize = 36.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Spacer(modifier = Modifier.height(40.dp))
 
-        Text(
-            "Faça login na sua conta!",
-            fontSize = 16.sp,
-            color = Color.Gray
-        )
-
-        Spacer(modifier = Modifier.height(50.dp))
-
-        // Email ligado ao ViewModel
         OutlinedTextField(
             value = viewModel.email,
             onValueChange = { viewModel.onEmailChange(it) },
-            label = { Text("email@dominio.com") },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+            label = { Text("Email") },
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(15.dp))
 
-        // Password ligada ao ViewModel
         OutlinedTextField(
             value = viewModel.password,
             onValueChange = { viewModel.onPasswordChange(it) },
@@ -66,41 +50,40 @@ fun LoginScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        viewModel.errorMessage?.let {
+            Text(it, color = Color.Red, modifier = Modifier.padding(top = 8.dp))
+        }
 
-        // Botão Continuar com lógica no ViewModel
+        Spacer(modifier = Modifier.height(30.dp))
+
         Button(
             onClick = {
-                viewModel.onLoginClick {
-                    navController.navigate(AppRoutes.Home.route)
+                viewModel.onLoginClick { userId ->
+                    onLoginSuccess(userId)
+                    navController.navigate(AppRoutes.Home.route) {
+                        popUpTo(AppRoutes.Login.route) { inclusive = true }
+                    }
                 }
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            colors = ButtonDefaults.buttonColors(Color.Black)
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
         ) {
-            Text("Continuar", color = Color.White, fontSize = 18.sp)
+            Text("Continuar", color = Color.White)
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        Text(
-            text = "Não tens conta? Criar conta!",
-            color = Color.Blue,
-            fontSize = 15.sp,
-            modifier = Modifier.clickable {
-                navController.navigate(AppRoutes.SignIn.route)
-            }
-        )
-
-        Spacer(modifier = Modifier.height(26.dp))
-
-        Text(
-            text = "Ao clicar em continuar, você concorda com os nossos\nTermos de Serviço e com a Política de Privacidade",
-            fontSize = 12.sp,
-            color = Color.Gray,
-            textAlign = TextAlign.Center
-        )
+        // PARTE RESTAURADA: Link para o ecrã de registo
+        Row {
+            Text("Não tem uma conta? ", color = Color.Gray)
+            Text(
+                text = "Registe-se aqui!",
+                color = Color(0xFF1E88E5),
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable {
+                    navController.navigate(AppRoutes.SignIn.route)
+                }
+            )
+        }
     }
 }

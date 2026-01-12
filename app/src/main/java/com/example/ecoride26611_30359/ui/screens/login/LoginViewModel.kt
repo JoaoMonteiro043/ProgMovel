@@ -1,35 +1,33 @@
 package com.example.ecoride26611_30359.ui.screens.login
 
+import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.ecoride26611_30359.data.local.AppDatabase
+import kotlinx.coroutines.launch
 
-class LoginViewModel : ViewModel() {
+class LoginViewModel(application: Application) : AndroidViewModel(application) {
+    private val userDao = AppDatabase.getDatabase(application).userDao()
 
-    // Estado do Email
     var email by mutableStateOf("")
-        private set
-
-    // Estado da Password
     var password by mutableStateOf("")
-        private set
+    var errorMessage by mutableStateOf<String?>(null)
 
-    // Funções para atualizar os estados
-    fun onEmailChange(newEmail: String) {
-        email = newEmail
-    }
+    fun onEmailChange(v: String) { email = v }
+    fun onPasswordChange(v: String) { password = v }
 
-    fun onPasswordChange(newPassword: String) {
-        password = newPassword
-    }
-
-    // Lógica de Login
-    fun onLoginClick(onSuccess: () -> Unit) {
-        // Validação simples: campos não podem estar vazios
-        if (email.isNotBlank() && password.isNotBlank()) {
-            // Futuramente aqui chamaremos a API via Retrofit
-            onSuccess()
+    // Mudança aqui: onSuccess agora recebe um Int (o ID do user)
+    fun onLoginClick(onSuccess: (Int) -> Unit) {
+        viewModelScope.launch {
+            val user = userDao.login(email, password)
+            if (user != null) {
+                onSuccess(user.id) // Enviamos o ID real do João ou Diogo
+            } else {
+                errorMessage = "Email ou password incorretos"
+            }
         }
     }
 }

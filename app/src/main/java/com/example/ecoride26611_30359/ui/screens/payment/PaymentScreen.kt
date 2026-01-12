@@ -19,7 +19,7 @@ import com.example.ecoride26611_30359.navigation.AppRoutes
 fun PaymentScreen(
     navController: NavHostController,
     from: String?,
-    viewModel: PaymentViewModel = viewModel() // Injeção do ViewModel
+    viewModel: PaymentViewModel = viewModel()
 ) {
     Column(
         modifier = Modifier
@@ -45,7 +45,6 @@ fun PaymentScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Lista de métodos vinda do ViewModel
         viewModel.paymentMethods.forEach { method ->
             Row(
                 modifier = Modifier
@@ -69,10 +68,8 @@ fun PaymentScreen(
             }
         }
 
-        // Spacer flexível para empurrar os botões para o fundo
         Spacer(modifier = Modifier.weight(1f))
 
-        // Botões de Ação
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -81,8 +78,14 @@ fun PaymentScreen(
         ) {
             Button(
                 onClick = {
-                    val route = viewModel.getBackRoute(from)
-                    navController.navigate(route)
+                    // CORREÇÃO: Usamos popBackStack para voltar ao ecrã anterior com segurança
+                    if (navController.previousBackStackEntry != null) {
+                        navController.popBackStack()
+                    } else {
+                        navController.navigate(AppRoutes.Home.route) {
+                            popUpTo(AppRoutes.Home.route) { inclusive = true }
+                        }
+                    }
                 },
                 modifier = Modifier
                     .weight(1f)
@@ -96,7 +99,9 @@ fun PaymentScreen(
             Button(
                 onClick = {
                     viewModel.confirmPayment {
-                        navController.navigate(AppRoutes.Home.route)
+                        navController.navigate(AppRoutes.Home.route) {
+                            popUpTo(AppRoutes.Home.route) { inclusive = true }
+                        }
                     }
                 },
                 enabled = viewModel.selectedPayment != null,

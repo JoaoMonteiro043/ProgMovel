@@ -2,9 +2,7 @@ package com.example.ecoride26611_30359.ui.screens.profile
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,10 +16,15 @@ import com.example.ecoride26611_30359.navigation.AppRoutes
 @Composable
 fun ProfileScreen(
     navController: NavHostController,
-    viewModel: ProfileViewModel = viewModel() // Injeção do ViewModel
+    userId: Int, // RECEBIDO DO APP NAVIGATION
+    viewModel: ProfileViewModel = viewModel()
 ) {
-    // Observa o estado do ViewModel (userName, userEmail, userRating)
     val uiState by viewModel.uiState.collectAsState()
+
+    // Carrega os dados assim que o ecrã é composto
+    LaunchedEffect(userId) {
+        viewModel.loadUserProfile(userId)
+    }
 
     Column(
         modifier = Modifier
@@ -38,29 +41,23 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // Linha do Nome
-        InfoRow(label = "Nome", value = uiState.userName)
+        if (uiState.isLoading) {
+            CircularProgressIndicator(color = Color.Black)
+        } else {
+            InfoRow(label = "Nome", value = uiState.userName)
+            Spacer(modifier = Modifier.height(20.dp))
+            InfoRow(label = "Email", value = uiState.userEmail)
+            Spacer(modifier = Modifier.height(20.dp))
+            InfoRow(label = "Avaliação", value = "${uiState.userRating} estrelas")
+        }
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Linha do Email
-        InfoRow(label = "Email", value = uiState.userEmail)
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Linha da Avaliação
-        InfoRow(label = "Avaliação", value = "${uiState.userRating} estrelas")
-
-        // Este Spacer com weight(1f) empurra o botão para o fundo
         Spacer(modifier = Modifier.weight(1f))
 
-        // Botão Logout
         Button(
             onClick = {
                 viewModel.onLogout {
-                    // Navega para o login e limpa todo o histórico para não voltar ao carregar "back"
                     navController.navigate(AppRoutes.Login.route) {
-                        popUpTo(0)
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             },
@@ -76,9 +73,6 @@ fun ProfileScreen(
     }
 }
 
-/**
- * Componente auxiliar para as linhas de informação do perfil
- */
 @Composable
 fun InfoRow(label: String, value: String) {
     Column(modifier = Modifier.fillMaxWidth()) {
