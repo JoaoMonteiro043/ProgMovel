@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -17,12 +18,17 @@ import com.example.ecoride26611_30359.navigation.AppRoutes
 @Composable
 fun DashboardPassengerScreen(
     navController: NavHostController,
+    loggedUserId: Int, // Adicionado parâmetro para filtrar viagens do próprio user
     viewModel: DashboardPassengerViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .padding(16.dp)) {
         Text("Procurar Viagem", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+
+        Spacer(modifier = Modifier.height(10.dp))
 
         OutlinedTextField(
             value = uiState.origem,
@@ -38,21 +44,32 @@ fun DashboardPassengerScreen(
         )
 
         Button(
-            onClick = { viewModel.procurarViagens() },
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+            onClick = { viewModel.procurarViagens(loggedUserId) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
         ) {
-            Text("Pesquisar")
+            Text("Pesquisar", color = Color.White)
         }
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(uiState.viagensEncontradas) { viagem ->
-                Card(modifier = Modifier.fillMaxWidth().clickable {
-                    // Navegação usando a rota definida no AppNavigation
-                    navController.navigate("${AppRoutes.CheckoutPassenger.route}/${viagem.id}")
-                }) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            navController.navigate("${AppRoutes.CheckoutPassenger.route}/${viagem.id}")
+                        }
+                ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text("De: ${viagem.origem} -> Para: ${viagem.destino}", fontWeight = FontWeight.Bold)
-                        Text("Data: ${viagem.dataHora}", fontSize = 12.sp)
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(viagem.driverName, fontWeight = FontWeight.Bold, color = Color.Blue)
+                            // Exibe lugares disponíveis logo na lista
+                            Text("Lugares: ${viagem.lugaresDisponiveis}", fontWeight = FontWeight.Bold, color = Color(0xFF4CAF50))
+                        }
+                        Text("De: ${viagem.origem} -> Para: ${viagem.destino}")
+                        Text("Data: ${viagem.dataHora}", fontSize = 12.sp, color = Color.Gray)
                     }
                 }
             }

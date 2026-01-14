@@ -5,7 +5,17 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [TripEntity::class, UserEntity::class], version = 2, exportSchema = false)
+@Database(
+    entities = [
+        TripEntity::class,
+        UserEntity::class,
+        ReservationEntity::class,
+        ChatEntity::class,
+        MessageEntity::class
+    ],
+    version = 6, // Versão 6 para incluir Chat e Mensagens
+    exportSchema = false
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun tripDao(): TripDao
     abstract fun userDao(): UserDao
@@ -20,7 +30,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "ecoride_database"
-                ).fallbackToDestructiveMigration().build()
+                )
+                    .fallbackToDestructiveMigration() // Importante para não crashar ao mudar versão
+                    .build()
                 INSTANCE = instance
                 instance
             }

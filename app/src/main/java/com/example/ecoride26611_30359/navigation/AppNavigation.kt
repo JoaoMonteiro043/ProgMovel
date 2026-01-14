@@ -39,12 +39,14 @@ sealed class AppRoutes(val route: String) {
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
+    // Estado global que guarda o ID do utilizador logado
     var loggedUserId by remember { mutableStateOf(-1) }
 
     NavHost(
         navController = navController,
         startDestination = AppRoutes.Login.route
     ) {
+        // LOGIN
         composable(AppRoutes.Login.route) {
             LoginScreen(
                 navController = navController,
@@ -54,23 +56,34 @@ fun AppNavigation(navController: NavHostController) {
             )
         }
 
+        // SIGN IN
         composable(AppRoutes.SignIn.route) { SignInScreen(navController) }
+
+        // HOME
         composable(AppRoutes.Home.route) { HomeScreen(navController) }
 
+        // DASHBOARD CONDUTOR
         composable(AppRoutes.DashboardDriver.route) {
             DashboardDriverScreen(navController, loggedUserId)
         }
 
-        composable(AppRoutes.DashboardPassenger.route) { DashboardPassengerScreen(navController) }
+        // DASHBOARD PASSAGEIRO
+        composable(AppRoutes.DashboardPassenger.route) {
+            DashboardPassengerScreen(navController, loggedUserId)
+        }
+
+        // CHECKOUT CONDUTOR
         composable(AppRoutes.CheckoutDriver.route) { CheckoutDriverScreen(navController) }
 
+        // CHECKOUT PASSAGEIRO
         composable(
             route = AppRoutes.CheckoutPassenger.route + "/{tripId}",
             arguments = listOf(navArgument("tripId") { type = NavType.IntType })
         ) {
-            CheckoutPassengerScreen(navController)
+            CheckoutPassengerScreen(navController, loggedUserId)
         }
 
+        // PAGAMENTO
         composable(
             route = AppRoutes.Payment.route + "?from={from}",
             arguments = listOf(navArgument("from") {
@@ -83,13 +96,31 @@ fun AppNavigation(navController: NavHostController) {
             PaymentScreen(navController, from)
         }
 
-        composable(AppRoutes.Chat.route) { ChatScreen(navController) }
-        composable(AppRoutes.Messages.route) { MessagesScreen(navController = navController) }
+        // LISTA DE CONVERSAS
+        composable(AppRoutes.Chat.route) {
+            ChatScreen(navController, loggedUserId)
+        }
 
+        // ECRÃ DE MENSAGENS (Chat de grupo da viagem)
+        composable(
+            route = AppRoutes.Messages.route + "/{tripId}",
+            arguments = listOf(navArgument("tripId") { type = NavType.IntType })
+        ) {
+            // CORREÇÃO: Passar o loggedUserId para o MessagesScreen
+            MessagesScreen(
+                navController = navController,
+                loggedUserId = loggedUserId
+            )
+        }
+
+        // PERFIL
         composable(AppRoutes.Profile.route) {
             ProfileScreen(navController, loggedUserId)
         }
 
-        composable(AppRoutes.Achievements.route) { AchievementsScreen() }
+        // CONQUISTAS
+        composable(AppRoutes.Achievements.route) {
+            AchievementsScreen()
+        }
     }
 }

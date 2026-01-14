@@ -11,13 +11,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-// Estado atualizado: Sem passageiro, com referência à imagem do mapa
 data class CheckoutDriverUiState(
     val origem: String = "",
     val destino: String = "",
+    val numLugares: Int = 0, // Adicionado campo
     val tempoEstimado: String = "45 mins",
     val distancia: String = "75 km",
-    val mapaImagem: Int = R.drawable.map // Garante que tens esta imagem em res/drawable
+    val mapaImagem: Int = R.drawable.map
 )
 
 class CheckoutDriverViewModel(application: Application) : AndroidViewModel(application) {
@@ -34,13 +34,12 @@ class CheckoutDriverViewModel(application: Application) : AndroidViewModel(appli
     private fun carregarUltimaViagem() {
         viewModelScope.launch {
             tripDao.getLastTrip().collect { trip ->
-                trip?.let { viagemBanco ->
-                    _uiState.update { currentState ->
-                        currentState.copy(
-                            origem = viagemBanco.origem,
-                            destino = viagemBanco.destino
-                        )
-                    }
+                trip?.let { v ->
+                    _uiState.update { it.copy(
+                        origem = v.origem,
+                        destino = v.destino,
+                        numLugares = v.lugaresTotal
+                    ) }
                 }
             }
         }

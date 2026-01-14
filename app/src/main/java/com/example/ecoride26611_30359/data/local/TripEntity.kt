@@ -6,12 +6,14 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "trips")
 data class TripEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val userId: Int, // ID do utilizador que criou a viagem
+    val userId: Int,
     val origem: String,
     val destino: String,
     val dataHora: String,
-    val latOrigem: Double,
-    val lngOrigem: Double,
-    val latDestino: Double,
-    val lngDestino: Double
+    val lugaresTotal: Int,
+    val lugaresDisponiveis: Int,
+    val latOrigem: Double = 0.0,
+    val lngOrigem: Double = 0.0,
+    val latDestino: Double = 0.0,
+    val lngDestino: Double = 0.0
 )

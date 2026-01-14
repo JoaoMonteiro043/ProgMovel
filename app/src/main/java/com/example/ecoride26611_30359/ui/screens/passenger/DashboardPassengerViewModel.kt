@@ -22,11 +22,11 @@ class DashboardPassengerViewModel(application: Application) : AndroidViewModel(a
     fun updateOrigem(v: String) = _uiState.update { it.copy(origem = v) }
     fun updateDestino(v: String) = _uiState.update { it.copy(destino = v) }
 
-    fun procurarViagens() {
+    fun procurarViagens(currentUserId: Int) {
         val state = _uiState.value
         viewModelScope.launch {
-            // Usamos a nova função com JOIN
-            tripDao.getAllTripsWithDrivers().collect { todas ->
+            // Passamos o ID do user atual para o DAO filtrar "userId != currentUserId"
+            tripDao.getAvailableTripsForPassenger(currentUserId).collect { todas ->
                 val filtradas = todas.filter {
                     it.origem.contains(state.origem, ignoreCase = true) &&
                             it.destino.contains(state.destino, ignoreCase = true)

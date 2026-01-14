@@ -1,65 +1,92 @@
 package com.example.ecoride26611_30359.ui.screens.chat
 
-import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
+import com.example.ecoride26611_30359.data.local.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
-// Representa uma mensagem individual na conversa
-data class MessageEntity(
-    val text: String,
-    val isFromMe: Boolean,
-    val timestamp: String
-)
-
-// Estado do ecrã de mensagens
 data class MessagesUiState(
-    val contactName: String = "Utilizador",
+    val groupName: String = "Chat da Viagem",
     val messages: List<MessageEntity> = emptyList(),
-    val currentInput: String = ""
+    val currentInput: String = "",
+    val tripDetails: TripWithDriver? = null,
+    val participants: List<UserEntity> = emptyList()
 )
 
-class MessagesViewModel : ViewModel() {
+class MessagesViewModel(
+    application: Application,
+    savedStateHandle: SavedStateHandle
+) : AndroidViewModel(application) {
+
+    private val database = AppDatabase.getDatabase(application)
+    private val tripDao = database.tripDao()
+    private val userDao = database.userDao()
+    private val chatId: Int = savedStateHandle.get<Int>("tripId") ?: -1
 
     private val _uiState = MutableStateFlow(MessagesUiState())
-    val uiState: StateFlow<MessagesUiState> = _uiState.asStateFlow()
+    val uiState = _uiState.asStateFlow()
 
     init {
-        loadConversation()
+        loadMessages()
+        loadTripDetails()
+        loadParticipants()
     }
 
-    private fun loadConversation() {
-        // Dados estáticos iniciais
-        val initialMessages = listOf(
-            MessageEntity("Olá! Ainda tens lugar para a viagem?", false, "10:30"),
-            MessageEntity("Olá! Sim, ainda tenho dois lugares disponíveis.", true, "10:32"),
-            MessageEntity("Ótimo! Aceitas levar uma mala pequena?", false, "10:33")
-        )
-        _uiState.update { it.copy(messages = initialMessages, contactName = "Ana") }
-    }
-
-    fun onInputChange(newValue: String) {
-        _uiState.update { it.copy(currentInput = newValue) }
-    }
-
-    fun sendMessage() {
-        val textToSend = _uiState.value.currentInput
-        if (textToSend.isNotBlank()) {
-            val newMessage = MessageEntity(
-                text = textToSend,
-                isFromMe = true,
-                timestamp = "10:35" // Numa app real usaríamos o tempo atual
-            )
-
-            _uiState.update {
-                it.copy(
-                    messages = it.messages + newMessage,
-                    currentInput = "" // Limpa o campo de texto
-                )
+    private fun loadMessages() {
+        if (chatId == -1) return
+        viewModelScope.launch {
+            tripDao.getMessagesForChat(chatId).collect { list ->
+                _uiState.update { it.copy(messages = list) }
             }
         }
     }
+
+    private fun loadTripDetails() {
+        if (chatId == -1) return
+        viewModelScope.launch {
+            val trip = tripDao.getTripWithDriverById(chatId)
+            _uiState.update { it.copy(tripDetails = trip, groupName = "Viagem: ${trip?.origem} - ${trip?.destino}") }
+        }
+    }
+
+    fun loadParticipants() {
+        viewModelScope.launch {
+            val list = tripDao.getTripParticipants(chatId)
+            _uiState.update { it.copy(participants = list) }
+        }
+    }
+
+    fun onInputChange(v: String) = _uiState.update { it.copy(currentInput = v) }
+
+    fun sendMessage(senderId: Int) {
+        val text = _uiState.value.currentInput
+        if (text.isBlank() || senderId == -1) return
+
+        viewModelScope.launch {
+            val user = userDao.getUserById(senderId)
+            val senderName = user?.name ?: "Desconhecido"
+
+            tripDao.insertMessage(MessageEntity(
+                chatId = chatId,
+                senderId = senderId,
+                senderName = senderName,
+                text = text,
+                timestamp = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+            ))
+            _uiState.update { it.copy(currentInput = "") }
+        }
+    }
+
+    fun leaveTrip(userId: Int, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            tripDao.removeReservation(userId, chatId)
+            tripDao.addSeatBack(chatId)
+            onSuccess()
+        }
+    }
 }
-
-

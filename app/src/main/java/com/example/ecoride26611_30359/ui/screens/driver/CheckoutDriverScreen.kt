@@ -36,7 +36,6 @@ fun CheckoutDriverScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Reintrodução da Imagem do Mapa
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -53,7 +52,6 @@ fun CheckoutDriverScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Card com Detalhes (Lê do Room)
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
@@ -64,6 +62,8 @@ fun CheckoutDriverScreen(
 
                 Text("De: ${uiState.origem}", fontWeight = FontWeight.SemiBold)
                 Text("Para: ${uiState.destino}", fontWeight = FontWeight.SemiBold)
+                // Adicionado resumo de lugares
+                Text("Lugares para Passageiros: ${uiState.numLugares}", fontWeight = FontWeight.Bold, color = Color.DarkGray)
 
                 Spacer(modifier = Modifier.height(12.dp))
                 HorizontalDivider()
@@ -85,9 +85,8 @@ fun CheckoutDriverScreen(
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f)) // Empurra os botões para baixo
+        Spacer(modifier = Modifier.weight(1f))
 
-        // Botões de Ação
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -104,7 +103,9 @@ fun CheckoutDriverScreen(
             Button(
                 onClick = {
                     viewModel.confirmarViagem {
-                        navController.navigate(AppRoutes.Home.route)
+                        navController.navigate(AppRoutes.Home.route) {
+                            popUpTo(AppRoutes.Home.route) { inclusive = true }
+                        }
                     }
                 },
                 modifier = Modifier.weight(1f).height(50.dp),
