@@ -23,7 +23,6 @@ import com.example.ecoride26611_30359.ui.screens.chat.MessagesScreen
 import com.example.ecoride26611_30359.ui.screens.profile.ProfileScreen
 import com.example.ecoride26611_30359.ui.screens.achievements.AchievementsScreen
 
-// Definição das Rotas
 sealed class AppRoutes(val route: String) {
     object Login : AppRoutes("login")
     object SignIn : AppRoutes("signin")
@@ -41,104 +40,74 @@ sealed class AppRoutes(val route: String) {
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
-    // Estado global que guarda o ID do utilizador logado
     var loggedUserId by remember { mutableIntStateOf(-1) }
 
-    NavHost(
-        navController = navController,
-        startDestination = AppRoutes.Login.route
-    ) {
-        // LOGIN
+    NavHost(navController = navController, startDestination = AppRoutes.Login.route) {
         composable(AppRoutes.Login.route) {
-            LoginScreen(
+            LoginScreen(navController = navController, onLoginSuccess = { loggedUserId = it })
+        }
+        composable(AppRoutes.SignIn.route) { SignInScreen(navController) }
+        composable(AppRoutes.Home.route) { HomeScreen(navController, loggedUserId) }
+        composable(AppRoutes.DashboardDriver.route) { DashboardDriverScreen(navController, loggedUserId) }
+        composable(AppRoutes.DashboardPassenger.route) { DashboardPassengerScreen(navController, loggedUserId) }
+
+        // Checkout Driver com params
+        composable(
+            route = AppRoutes.CheckoutDriver.route + "?origem={origem}&destino={destino}&data={data}&lugares={lugares}",
+            arguments = listOf(
+                navArgument("origem") { type = NavType.StringType; defaultValue = "" },
+                navArgument("destino") { type = NavType.StringType; defaultValue = "" },
+                navArgument("data") { type = NavType.StringType; defaultValue = "" },
+                navArgument("lugares") { type = NavType.IntType; defaultValue = 1 }
+            )
+        ) { backStackEntry ->
+            CheckoutDriverScreen(
                 navController = navController,
-                onLoginSuccess = { userId ->
-                    loggedUserId = userId
-                }
+                origem = backStackEntry.arguments?.getString("origem") ?: "",
+                destino = backStackEntry.arguments?.getString("destino") ?: "",
+                data = backStackEntry.arguments?.getString("data") ?: "",
+                lugares = backStackEntry.arguments?.getInt("lugares") ?: 1
             )
         }
 
-        // SIGN IN
-        composable(AppRoutes.SignIn.route) { SignInScreen(navController) }
-
-        // HOME
-        composable(AppRoutes.Home.route) { HomeScreen(navController) }
-
-        // DASHBOARD CONDUTOR
-        composable(AppRoutes.DashboardDriver.route) {
-            DashboardDriverScreen(navController, loggedUserId)
-        }
-
-        // DASHBOARD PASSAGEIRO
-        composable(AppRoutes.DashboardPassenger.route) {
-            DashboardPassengerScreen(navController, loggedUserId)
-        }
-
-        // CHECKOUT CONDUTOR
-        composable(AppRoutes.CheckoutDriver.route) { CheckoutDriverScreen(navController) }
-
-        // CHECKOUT PASSAGEIRO
         composable(
             route = AppRoutes.CheckoutPassenger.route + "/{tripId}",
             arguments = listOf(navArgument("tripId") { type = NavType.IntType })
         ) { backStackEntry ->
             val tripId = backStackEntry.arguments?.getInt("tripId") ?: -1
-            CheckoutPassengerScreen(
-                navController = navController,
-                loggedUserId = loggedUserId,
-                tripId = tripId
-            )
+            CheckoutPassengerScreen(navController, loggedUserId, tripId)
         }
 
-        // PAGAMENTO
+        // Pagamento com suporte a criação de viagem
         composable(
-            route = AppRoutes.Payment.route + "?from={from}&tripId={tripId}",
+            route = AppRoutes.Payment.route + "?from={from}&tripId={tripId}&origem={origem}&destino={destino}&data={data}&lugares={lugares}",
             arguments = listOf(
-                navArgument("from") {
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = "home"
-                },
-                navArgument("tripId") {
-                    type = NavType.IntType
-                    defaultValue = -1
-                }
+                navArgument("from") { type = NavType.StringType; defaultValue = "home" },
+                navArgument("tripId") { type = NavType.IntType; defaultValue = -1 },
+                navArgument("origem") { type = NavType.StringType; nullable = true },
+                navArgument("destino") { type = NavType.StringType; nullable = true },
+                navArgument("data") { type = NavType.StringType; nullable = true },
+                navArgument("lugares") { type = NavType.IntType; defaultValue = 1 }
             )
         ) { backStackEntry ->
-            val from = backStackEntry.arguments?.getString("from")
-            val tripId = backStackEntry.arguments?.getInt("tripId") ?: -1
             PaymentScreen(
                 navController = navController,
-                from = from,
-                tripId = tripId,
-                userId = loggedUserId
+                from = backStackEntry.arguments?.getString("from"),
+                tripId = backStackEntry.arguments?.getInt("tripId") ?: -1,
+                userId = loggedUserId,
+                origem = backStackEntry.arguments?.getString("origem"),
+                destino = backStackEntry.arguments?.getString("destino"),
+                data = backStackEntry.arguments?.getString("data"),
+                lugares = backStackEntry.arguments?.getInt("lugares") ?: 1
             )
         }
 
-        // LISTA DE CONVERSAS
-        composable(AppRoutes.Chat.route) {
-            ChatScreen(navController, loggedUserId)
-        }
-
-        // ECRÃ DE MENSAGENS
+        composable(AppRoutes.Chat.route) { ChatScreen(navController, loggedUserId) }
         composable(
             route = AppRoutes.Messages.route + "/{tripId}",
             arguments = listOf(navArgument("tripId") { type = NavType.IntType })
-        ) {
-            MessagesScreen(
-                navController = navController,
-                loggedUserId = loggedUserId
-            )
-        }
-
-        // PERFIL
-        composable(AppRoutes.Profile.route) {
-            ProfileScreen(navController, loggedUserId)
-        }
-
-        // CONQUISTAS
-        composable(AppRoutes.Achievements.route) {
-            AchievementsScreen()
-        }
+        ) { MessagesScreen(navController, loggedUserId) }
+        composable(AppRoutes.Profile.route) { ProfileScreen(navController, loggedUserId) }
+        composable(AppRoutes.Achievements.route) { AchievementsScreen() }
     }
 }

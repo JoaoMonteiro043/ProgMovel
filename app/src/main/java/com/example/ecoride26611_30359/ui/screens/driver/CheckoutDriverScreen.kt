@@ -14,104 +14,67 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.ecoride26611_30359.navigation.AppRoutes
+import com.example.ecoride26611_30359.R
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @Composable
 fun CheckoutDriverScreen(
     navController: NavHostController,
-    viewModel: CheckoutDriverViewModel = viewModel()
+    origem: String,
+    destino: String,
+    data: String,
+    lugares: Int
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
+        modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Resumo da Viagem Criada", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Text("Resumo da Viagem", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(20.dp))
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp),
-            shape = MaterialTheme.shapes.medium
-        ) {
+        Card(modifier = Modifier.fillMaxWidth().height(200.dp)) {
             Image(
-                painter = painterResource(id = uiState.mapaImagem),
-                contentDescription = "Mapa do percurso",
+                painter = painterResource(id = R.drawable.map),
+                contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(Modifier.height(24.dp))
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
-        ) {
+        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = "Itinerário", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text("De: ${uiState.origem}", fontWeight = FontWeight.SemiBold)
-                Text("Para: ${uiState.destino}", fontWeight = FontWeight.SemiBold)
-                // Adicionado resumo de lugares
-                Text("Lugares para Passageiros: ${uiState.numLugares}", fontWeight = FontWeight.Bold, color = Color.DarkGray)
-
-                Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider()
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text("Distância", color = Color.Gray, fontSize = 12.sp)
-                        Text(uiState.distancia, fontWeight = FontWeight.Bold)
-                    }
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text("Tempo Estimado", color = Color.Gray, fontSize = 12.sp)
-                        Text(uiState.tempoEstimado, fontWeight = FontWeight.Bold)
-                    }
-                }
+                Text("Itinerário", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text("De: $origem", fontWeight = FontWeight.SemiBold)
+                Text("Para: $destino", fontWeight = FontWeight.SemiBold)
+                Text("Data: $data", color = Color.Gray)
+                Text("Lugares: $lugares", fontWeight = FontWeight.Bold)
             }
         }
 
         Spacer(modifier = Modifier.weight(1f))
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            OutlinedButton(
-                onClick = { navController.popBackStack() },
-                modifier = Modifier.weight(1f).height(50.dp)
-            ) {
+        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            OutlinedButton(onClick = { navController.popBackStack() }, modifier = Modifier.weight(1f).height(50.dp)) {
                 Text("Editar")
             }
 
             Button(
                 onClick = {
-                    viewModel.confirmarViagem {
-                        navController.navigate(AppRoutes.Home.route) {
-                            popUpTo(AppRoutes.Home.route) { inclusive = true }
-                        }
-                    }
+                    val encodedOri = URLEncoder.encode(origem, StandardCharsets.UTF_8.toString())
+                    val encodedDest = URLEncoder.encode(destino, StandardCharsets.UTF_8.toString())
+                    val encodedData = URLEncoder.encode(data, StandardCharsets.UTF_8.toString())
+
+                    navController.navigate("${AppRoutes.Payment.route}?from=driver&origem=$encodedOri&destino=$encodedDest&data=$encodedData&lugares=$lugares")
                 },
                 modifier = Modifier.weight(1f).height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
             ) {
-                Text("Confirmar", color = Color.White)
+                Text("Pagar e Publicar", color = Color.White)
             }
         }
     }

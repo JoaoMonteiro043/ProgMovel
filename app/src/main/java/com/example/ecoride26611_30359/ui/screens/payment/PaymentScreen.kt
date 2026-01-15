@@ -21,6 +21,10 @@ fun PaymentScreen(
     from: String?,
     tripId: Int,
     userId: Int,
+    origem: String? = null,
+    destino: String? = null,
+    data: String? = null,
+    lugares: Int = 1,
     viewModel: PaymentViewModel = viewModel()
 ) {
     Column(
@@ -28,11 +32,8 @@ fun PaymentScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("Formas de Pagamento", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-
         Spacer(modifier = Modifier.height(50.dp))
-
         Text("Escolha a sua forma de pagamento:", fontSize = 16.sp, modifier = Modifier.fillMaxWidth())
-
         Spacer(modifier = Modifier.height(20.dp))
 
         viewModel.paymentMethods.forEach { method ->
@@ -71,8 +72,7 @@ fun PaymentScreen(
 
             Button(
                 onClick = {
-                    // Efetivar a reserva apenas agora
-                    viewModel.confirmPayment(userId, tripId) {
+                    viewModel.confirmPayment(userId, tripId, from, origem, destino, data, lugares) {
                         navController.navigate(AppRoutes.Home.route) {
                             popUpTo(AppRoutes.Home.route) { inclusive = true }
                         }
@@ -82,7 +82,8 @@ fun PaymentScreen(
                 modifier = Modifier.weight(1f).height(50.dp).padding(start = 6.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
             ) {
-                Text("Concluir e Reservar", color = Color.White)
+                val textoBotao = if (from == "driver") "Pagar e Publicar" else "Concluir e Reservar"
+                Text(textoBotao, color = Color.White)
             }
         }
     }

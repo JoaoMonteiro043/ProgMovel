@@ -2,10 +2,7 @@ package com.example.ecoride26611_30359.ui.screens.driver
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.ecoride26611_30359.data.local.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 
 data class DashboardDriverUiState(
     val origem: String = "",
@@ -16,32 +13,24 @@ data class DashboardDriverUiState(
 )
 
 class DashboardDriverViewModel(application: Application) : AndroidViewModel(application) {
-    private val tripDao = AppDatabase.getDatabase(application).tripDao()
     private val _uiState = MutableStateFlow(DashboardDriverUiState())
     val uiState = _uiState.asStateFlow()
 
-    fun updateOrigem(v: String) = _uiState.update { it.copy(origem = v) }
-    fun updateDestino(v: String) = _uiState.update { it.copy(destino = v) }
-    fun updateDataHora(v: String) = _uiState.update { it.copy(dataHora = v) }
-    fun updateNumLugares(v: String) = _uiState.update { it.copy(numLugares = v) }
+    fun updateOrigem(v: String) = _uiState.update { it.copy(origem = v, errorMessage = null) }
+    fun updateDestino(v: String) = _uiState.update { it.copy(destino = v, errorMessage = null) }
+    fun updateDataHora(v: String) = _uiState.update { it.copy(dataHora = v, errorMessage = null) }
+    fun updateNumLugares(v: String) = _uiState.update { it.copy(numLugares = v, errorMessage = null) }
 
-    fun criarViagem(userId: Int, onSuccess: () -> Unit) {
+    // FUNÇÃO CORRIGIDA: Apenas valida, não insere na BD
+    fun validarDados(onSuccess: (String, String, String, Int) -> Unit) {
         val state = _uiState.value
-        val lotacao = state.numLugares.toIntOrNull() ?: 1
 
-        viewModelScope.launch {
-            // 1. Cria a Viagem
-            val tripId = tripDao.insertTrip(TripEntity(
-                userId = userId, origem = state.origem, destino = state.destino,
-                dataHora = state.dataHora, lugaresTotal = lotacao, lugaresDisponiveis = lotacao
-            ))
-
-            // 2. Cria o Chat associado à viagem
-            tripDao.insertChat(ChatEntity(
-                tripId = tripId.toInt(),
-                groupName = "Viagem: ${state.origem} - ${state.destino}"
-            ))
-            onSuccess()
+        if (state.origem.isBlank() || state.destino.isBlank() || state.dataHora.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Por favor, preencha todos os campos obrigatórios (*)") }
+            return
         }
+
+        val lotacao = state.numLugares.toIntOrNull() ?: 1
+        onSuccess(state.origem, state.destino, state.dataHora, lotacao)
     }
 }

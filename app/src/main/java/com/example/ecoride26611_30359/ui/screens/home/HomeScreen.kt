@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -22,8 +23,13 @@ import com.example.ecoride26611_30359.navigation.AppRoutes
 @Composable
 fun HomeScreen(
     navController: NavHostController,
-    viewModel: HomeViewModel = viewModel() // Injeção do ViewModel
+    userId: Int,
+    viewModel: HomeViewModel = viewModel()
 ) {
+    LaunchedEffect(userId) {
+        viewModel.carregarUsuario(userId)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -31,19 +37,25 @@ fun HomeScreen(
             .padding(top = 100.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
         Spacer(modifier = Modifier.height(30.dp))
 
-        // Agora o nome é dinâmico vindo do ViewModel
         Text(
-            text = "BEM-VINDO, ${viewModel.userName.uppercase()}",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold
+            text = "BEM-VINDO,",
+            fontSize = 20.sp,
+            color = Color.Gray,
+            fontWeight = FontWeight.Medium
         )
 
-        Spacer(modifier = Modifier.height(100.dp))
+        // COR ALTERADA PARA PRETO AQUI
+        Text(
+            text = viewModel.userName.uppercase(),
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Black,
+            color = Color.Black
+        )
 
-        // Card Criar Viagem (Condutor)
+        Spacer(modifier = Modifier.height(80.dp))
+
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -73,7 +85,6 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(25.dp))
 
-        // Card Procurar Viagem (Passageiro)
         Card(
             modifier = Modifier
                 .fillMaxWidth()

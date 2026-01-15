@@ -12,7 +12,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
@@ -43,13 +42,28 @@ fun MessagesScreen(
 
     // Dialog de Detalhes da Viagem
     if (showDetails && uiState.tripDetails != null) {
+        val isDriver = loggedUserId == uiState.tripDetails?.userId
+
         AlertDialog(
             onDismissRequest = { showDetails = false },
             confirmButton = {
                 TextButton(onClick = { showDetails = false }) { Text("Fechar") }
             },
             dismissButton = {
-                if (loggedUserId != uiState.tripDetails?.userId) {
+                if (isDriver) {
+                    // BOTÃO PARA O CONDUTOR CANCELAR PARA TODOS
+                    TextButton(
+                        onClick = {
+                            viewModel.cancelTrip {
+                                showDetails = false
+                                navController.popBackStack()
+                            }
+                        }
+                    ) {
+                        Text("CANCELAR VIAGEM (PARA TODOS)", color = Color.Red, fontWeight = FontWeight.Bold)
+                    }
+                } else {
+                    // BOTÃO PARA O PASSAGEIRO SAIR
                     TextButton(
                         onClick = {
                             viewModel.leaveTrip(loggedUserId) {
@@ -58,7 +72,7 @@ fun MessagesScreen(
                             }
                         }
                     ) {
-                        Text("Sair da Viagem", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                        Text("Sair da Viagem", color = MaterialTheme.colorScheme.error)
                     }
                 }
             },
@@ -81,15 +95,9 @@ fun MessagesScreen(
                             Text("Para: ${uiState.tripDetails?.destino}", fontWeight = FontWeight.Bold)
                         }
                     }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Column {
-                            Text("CONDUTOR", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-                            Text(uiState.tripDetails?.driverName ?: "", fontWeight = FontWeight.Medium)
-                        }
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text("HORÁRIO", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-                            Text(uiState.tripDetails?.dataHora ?: "", fontWeight = FontWeight.Medium)
-                        }
+                    if (isDriver) {
+                        Text("Atenção: Ao cancelar, a viagem será removida para todos os passageiros.",
+                            color = Color.Red, fontSize = 12.sp)
                     }
                 }
             }
@@ -129,7 +137,7 @@ fun MessagesScreen(
                         showParticipants = true
                     }) {
                         Text(uiState.groupName, fontWeight = FontWeight.Bold, fontSize = 17.sp)
-                        Text("Ver participantes • Resumo", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
+                        Text("Ver participantes • Detalhes", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
                     }
                 },
                 navigationIcon = {
@@ -182,17 +190,8 @@ fun MessagesScreen(
             }
         }
     ) { paddingValues ->
-        // Fundo com cor leve para destacar bolhas
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-        ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
-            ) {
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))) {
+            LazyColumn(modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp), contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)) {
                 items(uiState.messages) { message ->
                     MessageBubble(message, loggedUserId)
                 }
@@ -205,49 +204,18 @@ fun MessagesScreen(
 fun MessageBubble(message: MessageEntity, loggedUserId: Int) {
     val isMe = message.senderId == loggedUserId
     val alignment = if (isMe) Alignment.CenterEnd else Alignment.CenterStart
-
-    // Cores de bolha modernas
     val bubbleColor = if (isMe) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
     val contentColor = if (isMe) Color.White else MaterialTheme.colorScheme.onSurface
 
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = alignment) {
-        Column(
-            horizontalAlignment = if (isMe) Alignment.End else Alignment.Start,
-            modifier = Modifier.widthIn(max = 300.dp)
-        ) {
+        Column(horizontalAlignment = if (isMe) Alignment.End else Alignment.Start, modifier = Modifier.widthIn(max = 300.dp)) {
             if (!isMe) {
-                Text(
-                    text = message.senderName,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = 8.dp, bottom = 2.dp)
-                )
+                Text(message.senderName, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(start = 8.dp, bottom = 2.dp))
             }
-            Surface(
-                color = bubbleColor,
-                tonalElevation = if (isMe) 0.dp else 2.dp,
-                shadowElevation = 1.dp,
-                shape = RoundedCornerShape(
-                    topStart = 16.dp,
-                    topEnd = 16.dp,
-                    bottomStart = if (isMe) 16.dp else 2.dp,
-                    bottomEnd = if (isMe) 2.dp else 16.dp
-                )
-            ) {
+            Surface(color = bubbleColor, tonalElevation = if (isMe) 0.dp else 2.dp, shadowElevation = 1.dp, shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = if (isMe) 16.dp else 2.dp, bottomEnd = if (isMe) 2.dp else 16.dp)) {
                 Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                    Text(
-                        text = message.text,
-                        color = contentColor,
-                        fontSize = 15.sp,
-                        lineHeight = 20.sp
-                    )
-                    Text(
-                        text = message.timestamp,
-                        fontSize = 10.sp,
-                        color = if (isMe) Color.White.copy(alpha = 0.7f) else Color.Gray,
-                        modifier = Modifier.align(Alignment.End).padding(top = 2.dp)
-                    )
+                    Text(message.text, color = contentColor, fontSize = 15.sp, lineHeight = 20.sp)
+                    Text(message.timestamp, fontSize = 10.sp, color = if (isMe) Color.White.copy(alpha = 0.7f) else Color.Gray, modifier = Modifier.align(Alignment.End).padding(top = 2.dp))
                 }
             }
         }

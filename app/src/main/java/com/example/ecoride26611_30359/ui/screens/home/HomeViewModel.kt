@@ -1,25 +1,30 @@
 package com.example.ecoride26611_30359.ui.screens.home
 
+import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.ecoride26611_30359.data.local.AppDatabase
+import kotlinx.coroutines.launch
 
-class HomeViewModel : ViewModel() {
+class HomeViewModel(application: Application) : AndroidViewModel(application) {
+    private val userDao = AppDatabase.getDatabase(application).userDao()
 
-    // No futuro, este nome viria da base de dados após o login
     var userName by mutableStateOf("Utilizador")
         private set
 
-    /**
-     * Lógica para carregar dados iniciais da Home, se necessário.
-     */
-    init {
-        // Exemplo: Simular carregamento do nome do utilizador
-        userName = "Nuno"
+    fun carregarUsuario(userId: Int) {
+        if (userId == -1) return
+        viewModelScope.launch {
+            val user = userDao.getUserById(userId)
+            user?.let {
+                userName = it.name
+            }
+        }
     }
 
-    // Funções de clique podem ser centralizadas aqui se houver lógica extra (ex: Analytics)
     fun onNavigateToDriver(onNavigate: () -> Unit) {
         onNavigate()
     }

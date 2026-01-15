@@ -89,4 +89,14 @@ class MessagesViewModel(
             onSuccess()
         }
     }
+
+    // NOVA FUNÇÃO: Cancela a viagem para todos
+    fun cancelTrip(onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            if (chatId != -1) {
+                tripDao.cancelEntireTrip(chatId)
+                onSuccess()
+            }
+        }
+    }
 }

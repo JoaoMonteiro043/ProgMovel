@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -19,6 +20,27 @@ interface TripDao {
 
     @Insert
     suspend fun insertMessage(message: MessageEntity)
+
+    // FUNÇÃO PARA CANCELAR VIAGEM (Elimina em cascata se configurado ou manualmente)
+    @Query("DELETE FROM trips WHERE id = :tripId")
+    suspend fun deleteTrip(tripId: Int)
+
+    @Query("DELETE FROM reservations WHERE tripId = :tripId")
+    suspend fun deleteReservationsByTrip(tripId: Int)
+
+    @Query("DELETE FROM chats WHERE tripId = :tripId")
+    suspend fun deleteChatByTrip(tripId: Int)
+
+    @Query("DELETE FROM messages WHERE chatId = :tripId")
+    suspend fun deleteMessagesByTrip(tripId: Int)
+
+    @Transaction
+    suspend fun cancelEntireTrip(tripId: Int) {
+        deleteMessagesByTrip(tripId)
+        deleteChatByTrip(tripId)
+        deleteReservationsByTrip(tripId)
+        deleteTrip(tripId)
+    }
 
     @Query("""
         SELECT DISTINCT chats.* FROM chats 
