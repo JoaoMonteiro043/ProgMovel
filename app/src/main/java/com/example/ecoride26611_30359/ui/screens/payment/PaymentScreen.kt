@@ -19,29 +19,19 @@ import com.example.ecoride26611_30359.navigation.AppRoutes
 fun PaymentScreen(
     navController: NavHostController,
     from: String?,
+    tripId: Int,
+    userId: Int,
     viewModel: PaymentViewModel = viewModel()
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 20.dp)
-            .padding(top = 60.dp),
+        modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp).padding(top = 60.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Formas de Pagamento",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Text("Formas de Pagamento", fontSize = 22.sp, fontWeight = FontWeight.Bold)
 
         Spacer(modifier = Modifier.height(50.dp))
 
-        Text(
-            text = "Escolha a sua forma de pagamento:",
-            fontSize = 16.sp,
-            modifier = Modifier.fillMaxWidth(),
-            fontWeight = FontWeight.Medium
-        )
+        Text("Escolha a sua forma de pagamento:", fontSize = 16.sp, modifier = Modifier.fillMaxWidth())
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -70,27 +60,10 @@ fun PaymentScreen(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 20.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp)) {
             Button(
-                onClick = {
-                    // CORREÇÃO: Usamos popBackStack para voltar ao ecrã anterior com segurança
-                    if (navController.previousBackStackEntry != null) {
-                        navController.popBackStack()
-                    } else {
-                        navController.navigate(AppRoutes.Home.route) {
-                            popUpTo(AppRoutes.Home.route) { inclusive = true }
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(50.dp)
-                    .padding(end = 6.dp),
+                onClick = { navController.popBackStack() },
+                modifier = Modifier.weight(1f).height(50.dp).padding(end = 6.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
             ) {
                 Text("Voltar", color = Color.White)
@@ -98,20 +71,18 @@ fun PaymentScreen(
 
             Button(
                 onClick = {
-                    viewModel.confirmPayment {
+                    // Efetivar a reserva apenas agora
+                    viewModel.confirmPayment(userId, tripId) {
                         navController.navigate(AppRoutes.Home.route) {
                             popUpTo(AppRoutes.Home.route) { inclusive = true }
                         }
                     }
                 },
                 enabled = viewModel.selectedPayment != null,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(50.dp)
-                    .padding(start = 6.dp),
+                modifier = Modifier.weight(1f).height(50.dp).padding(start = 6.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
             ) {
-                Text("Concluir", color = Color.White)
+                Text("Concluir e Reservar", color = Color.White)
             }
         }
     }

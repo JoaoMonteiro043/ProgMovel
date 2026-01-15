@@ -46,7 +46,8 @@ interface TripDao {
     suspend fun hasUserReservedTrip(userId: Int, tripId: Int): Int
 
     @Query("""
-        SELECT trips.id, trips.userId, users.name as driverName, trips.origem, trips.destino, trips.dataHora, trips.lugaresDisponiveis 
+        SELECT trips.id, trips.userId, users.name as driverName, trips.origem, trips.destino, trips.dataHora, 
+               trips.lugaresDisponiveis, users.carro, users.matricula 
         FROM trips 
         INNER JOIN users ON trips.userId = users.id
         WHERE trips.lugaresDisponiveis > 0 AND trips.userId != :currentUserId
@@ -54,7 +55,8 @@ interface TripDao {
     fun getAvailableTripsForPassenger(currentUserId: Int): Flow<List<TripWithDriver>>
 
     @Query("""
-        SELECT trips.id, trips.userId, users.name as driverName, trips.origem, trips.destino, trips.dataHora, trips.lugaresDisponiveis 
+        SELECT trips.id, trips.userId, users.name as driverName, trips.origem, trips.destino, trips.dataHora, 
+               trips.lugaresDisponiveis, users.carro, users.matricula 
         FROM trips 
         INNER JOIN users ON trips.userId = users.id 
         WHERE trips.id = :tripId LIMIT 1

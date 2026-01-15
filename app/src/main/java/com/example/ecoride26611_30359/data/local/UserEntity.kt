@@ -8,5 +8,8 @@ data class UserEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val name: String,
     val email: String,
-    val password: String // Em produção, usaríamos hash, aqui mantemos simples para estudo
+    val password: String,
+    val cartaConducao: String = "",
+    val carro: String = "",
+    val matricula: String = ""
 )

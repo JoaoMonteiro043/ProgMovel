@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.example.ecoride26611_30359.R
 import com.example.ecoride26611_30359.data.local.AppDatabase
 import com.example.ecoride26611_30359.data.local.ReservationEntity
 import kotlinx.coroutines.flow.*
@@ -14,8 +15,13 @@ data class CheckoutPassengerUiState(
     val destino: String = "",
     val dataViagem: String = "",
     val nomeCondutor: String = "",
+    val carro: String = "",
+    val matricula: String = "",
+    val distancia: String = "42 km", // Simulado
+    val tempoEstimado: String = "35 mins", // Simulado
+    val mapaImagem: Int = R.drawable.map, // Recurso de imagem
     val jaReservou: Boolean = false,
-    val errorMessage: String? = null
+    val isLoading: Boolean = true
 )
 
 class CheckoutPassengerViewModel(
@@ -31,18 +37,18 @@ class CheckoutPassengerViewModel(
 
     fun carregarDados(userId: Int) {
         if (tripId == -1) return
-
         viewModelScope.launch {
             val count = tripDao.hasUserReservedTrip(userId, tripId)
-
-            // Agora a função existe no DAO
             tripDao.getTripWithDriverById(tripId)?.let { v ->
                 _uiState.update { it.copy(
                     origem = v.origem,
                     destino = v.destino,
                     dataViagem = v.dataHora,
                     nomeCondutor = v.driverName,
-                    jaReservou = count > 0
+                    carro = v.carro,
+                    matricula = v.matricula,
+                    jaReservou = count > 0,
+                    isLoading = false
                 ) }
             }
         }
@@ -50,12 +56,7 @@ class CheckoutPassengerViewModel(
 
     fun acceptTrip(userId: Int, onSuccess: () -> Unit) {
         viewModelScope.launch {
-            val check = tripDao.hasUserReservedTrip(userId, tripId)
-            if (check > 0) {
-                _uiState.update { it.copy(errorMessage = "Já reservou esta viagem!") }
-                return@launch
-            }
-
+            if (tripId == -1) return@launch
             tripDao.reserveSeat(tripId)
             tripDao.insertReservation(ReservationEntity(userId = userId, tripId = tripId))
             onSuccess()

@@ -1,11 +1,18 @@
 package com.example.ecoride26611_30359.ui.screens.passenger
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -16,56 +23,88 @@ import com.example.ecoride26611_30359.navigation.AppRoutes
 @Composable
 fun CheckoutPassengerScreen(
     navController: NavHostController,
-    loggedUserId: Int, // Certifique-se que o AppNavigation passa este ID
+    loggedUserId: Int,
+    tripId: Int,
     viewModel: CheckoutPassengerViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // Dispara o carregamento ao abrir o ecrã
-    LaunchedEffect(Unit) {
+    LaunchedEffect(loggedUserId) {
         viewModel.carregarDados(loggedUserId)
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Resumo da Viagem", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Text("Resumo da Reserva", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+
+        Spacer(modifier = Modifier.height(20.dp))
 
         Card(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
+            modifier = Modifier.fillMaxWidth().height(180.dp),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Image(
+                painter = painterResource(id = uiState.mapaImagem),
+                contentDescription = "Mapa",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Condutor: ${uiState.nomeCondutor}",
-                    color = Color(0xFF1E88E5),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
+                Text(text = "Informação da Viagem", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("De: ${uiState.origem}", fontWeight = FontWeight.SemiBold)
+                Text("Para: ${uiState.destino}", fontWeight = FontWeight.SemiBold)
+                Text("Data: ${uiState.dataViagem}", color = Color.Gray)
                 Spacer(modifier = Modifier.height(12.dp))
                 HorizontalDivider()
                 Spacer(modifier = Modifier.height(12.dp))
-                Text("De: ${uiState.origem}", fontWeight = FontWeight.SemiBold)
-                Text("Para: ${uiState.destino}", fontWeight = FontWeight.SemiBold)
-                Text("Horário: ${uiState.dataViagem}", color = Color.Gray)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Column {
+                        Text("Distância", color = Color.Gray, fontSize = 12.sp)
+                        Text(uiState.distancia, fontWeight = FontWeight.Bold)
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("Tempo Estimado", color = Color.Gray, fontSize = 12.sp)
+                        Text(uiState.tempoEstimado, fontWeight = FontWeight.Bold)
+                    }
+                }
             }
         }
 
-        if (uiState.jaReservou) {
-            Text("Você já aceitou esta viagem!", color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
-        }
+        Spacer(modifier = Modifier.height(16.dp))
 
-        uiState.errorMessage?.let {
-            Text(it, color = Color.Red)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f))
+        ) {
+            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.DirectionsCar, null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text("Condutor: ${uiState.nomeCondutor}", fontWeight = FontWeight.Bold)
+                    val veiculo = if (uiState.carro.isBlank()) "Não especificado" else "${uiState.carro} (${uiState.matricula})"
+                    Text("Veículo: $veiculo", fontSize = 14.sp)
+                }
+            }
         }
 
         Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedButton(
                 onClick = { navController.popBackStack() },
                 modifier = Modifier.weight(1f).height(50.dp)
@@ -75,18 +114,14 @@ fun CheckoutPassengerScreen(
 
             Button(
                 onClick = {
-                    viewModel.acceptTrip(loggedUserId) {
-                        navController.navigate(AppRoutes.Payment.route + "?from=passenger")
-                    }
+                    // Apenas navega para o pagamento, passando o tripId
+                    navController.navigate("${AppRoutes.Payment.route}?from=passenger&tripId=$tripId")
                 },
-                // DESATIVA O BOTÃO SE JÁ RESERVOU
                 enabled = !uiState.jaReservou,
                 modifier = Modifier.weight(1f).height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (uiState.jaReservou) Color.Gray else Color.Black
-                )
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
             ) {
-                Text(if (uiState.jaReservou) "Aceite" else "Aceitar", color = Color.White)
+                Text(text = if (uiState.jaReservou) "Aceite" else "Pagar", color = Color.White)
             }
         }
     }

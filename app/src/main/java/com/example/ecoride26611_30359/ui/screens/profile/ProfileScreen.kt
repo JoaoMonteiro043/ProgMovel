@@ -1,6 +1,8 @@
 package com.example.ecoride26611_30359.ui.screens.profile
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,72 +18,94 @@ import com.example.ecoride26611_30359.navigation.AppRoutes
 @Composable
 fun ProfileScreen(
     navController: NavHostController,
-    userId: Int, // RECEBIDO DO APP NAVIGATION
+    userId: Int,
     viewModel: ProfileViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // Carrega os dados assim que o ecrã é composto
+    var carta by remember(uiState.carta) { mutableStateOf(uiState.carta) }
+    var carro by remember(uiState.carro) { mutableStateOf(uiState.carro) }
+    var matricula by remember(uiState.matricula) { mutableStateOf(uiState.matricula) }
+
     LaunchedEffect(userId) {
-        viewModel.loadUserProfile(userId)
+        if (userId != -1) viewModel.loadUserProfile(userId)
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 20.dp)
-            .padding(top = 60.dp),
+            .padding(top = 40.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Meu Perfil",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.height(40.dp))
+        Text("Meu Perfil", fontSize = 26.sp, fontWeight = FontWeight.Bold)
 
         if (uiState.isLoading) {
-            CircularProgressIndicator(color = Color.Black)
+            CircularProgressIndicator(modifier = Modifier.padding(top = 40.dp))
         } else {
+            Spacer(Modifier.height(30.dp))
+
+            uiState.errorMessage?.let {
+                Text(it, color = Color.Red, fontSize = 14.sp)
+                Spacer(Modifier.height(8.dp))
+            }
+
             InfoRow(label = "Nome", value = uiState.userName)
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(Modifier.height(15.dp))
             InfoRow(label = "Email", value = uiState.userEmail)
-            Spacer(modifier = Modifier.height(20.dp))
-            InfoRow(label = "Avaliação", value = "${uiState.userRating} estrelas")
+
+            HorizontalDivider(Modifier.padding(vertical = 20.dp))
+
+            Text("Veículo & Documentação", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+
+            Spacer(Modifier.height(10.dp))
+            OutlinedTextField(
+                value = carta,
+                onValueChange = { carta = it },
+                label = { Text("Carta de Condução") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(10.dp))
+            OutlinedTextField(
+                value = carro,
+                onValueChange = { carro = it },
+                label = { Text("Modelo do Carro") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(10.dp))
+            OutlinedTextField(
+                value = matricula,
+                onValueChange = { matricula = it },
+                label = { Text("Matrícula") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Button(
+                onClick = { viewModel.updateProfile(userId, carta, carro, matricula) },
+                modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) {
+                Text("Guardar Alterações")
+            }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
-
+        Spacer(modifier = Modifier.height(40.dp))
         Button(
-            onClick = {
-                viewModel.onLogout {
-                    navController.navigate(AppRoutes.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
+            onClick = { viewModel.onLogout { navController.navigate(AppRoutes.Login.route) { popUpTo(0) } } },
+            modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
         ) {
-            Text("LOG OUT", color = Color.White, fontSize = 16.sp)
+            Text("LOG OUT", color = Color.White)
         }
-
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(20.dp))
     }
 }
 
 @Composable
 fun InfoRow(label: String, value: String) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(text = label, fontSize = 14.sp, color = Color.Gray)
-        Text(
-            text = value,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
-            color = Color.DarkGray
-        )
+        Text(text = label, fontSize = 12.sp, color = Color.Gray)
+        Text(text = value, fontSize = 17.sp, fontWeight = FontWeight.Medium)
     }
 }

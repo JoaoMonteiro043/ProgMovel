@@ -7,5 +7,8 @@ data class TripWithDriver(
     val origem: String,
     val destino: String,
     val dataHora: String,
-    val lugaresDisponiveis: Int // Adicionado aqui
+    val lugaresDisponiveis: Int,
+    // Adicionado para mostrar ao passageiro
+    val carro: String = "",
+    val matricula: String = ""
 )

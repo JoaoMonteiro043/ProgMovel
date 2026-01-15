@@ -13,8 +13,6 @@ import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,10 +22,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ecoride26611_30359.ui.EcoRide26611_30359Theme
 
-// 1. Modelo de dados
+// 1. Modelo de dados simples
 data class Achievement(
     val id: Int,
     val title: String,
@@ -39,40 +36,64 @@ data class Achievement(
     val isUnlocked: Boolean = currentProgress >= targetProgress
 }
 
-// 2. O ecrã principal de Conquistas (Atualizado para usar ViewModel)
+// 2. O ecrã principal de Conquistas (Sem ViewModel, com dados estáticos)
 @Composable
-fun AchievementsScreen(
-    viewModel: AchievementsViewModel = viewModel()
-) {
-    // Observa o estado do ViewModel
-    val uiState by viewModel.uiState.collectAsState()
+fun AchievementsScreen() {
+    // Lista de conquistas estática definida localmente
+    val achievements = listOf(
+        Achievement(
+            id = 1,
+            title = "Primeira Viagem",
+            description = "Completou a sua primeira boleia com sucesso.",
+            icon = Icons.Default.Star,
+            currentProgress = 1,
+            targetProgress = 1
+        ),
+        Achievement(
+            id = 2,
+            title = "Eco-Amigo",
+            description = "Poupe 50kg de CO2 partilhando viagens.",
+            icon = Icons.Default.VerifiedUser,
+            currentProgress = 20,
+            targetProgress = 50
+        ),
+        Achievement(
+            id = 3,
+            title = "Condutor de Elite",
+            description = "Realize 10 viagens como condutor.",
+            icon = Icons.Default.MilitaryTech,
+            currentProgress = 3,
+            targetProgress = 10
+        ),
+        Achievement(
+            id = 4,
+            title = "Passageiro Frequente",
+            description = "Reserve 5 boleias na aplicação.",
+            icon = Icons.Default.WorkspacePremium,
+            currentProgress = 5,
+            targetProgress = 5
+        )
+    )
 
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        if (uiState.isLoading) {
-            // Mostra um carregamento enquanto os dados não chegam
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+        LazyColumn(
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                Text(
+                    text = "As Suas Conquistas",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
             }
-        } else {
-            LazyColumn(
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                item {
-                    Text(
-                        text = "As Suas Conquistas",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                }
 
-                items(uiState.achievements) { achievement ->
-                    AchievementItem(achievement = achievement)
-                }
+            items(achievements) { achievement ->
+                AchievementItem(achievement = achievement)
             }
         }
     }
@@ -137,6 +158,19 @@ fun AchievementItem(achievement: Achievement) {
                         color = MaterialTheme.colorScheme.primary,
                         trackColor = MaterialTheme.colorScheme.surface
                     )
+                    Text(
+                        text = "${achievement.currentProgress} / ${achievement.targetProgress}",
+                        fontSize = 10.sp,
+                        modifier = Modifier.align(Alignment.End).padding(top = 2.dp)
+                    )
+                } else {
+                    Text(
+                        text = "Concluído!",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
                 }
             }
         }
@@ -148,7 +182,6 @@ fun AchievementItem(achievement: Achievement) {
 @Composable
 fun AchievementsScreenPreview() {
     EcoRide26611_30359Theme {
-        // Para o preview, o ViewModel carregará os dados por padrão
         AchievementsScreen()
     }
 }
