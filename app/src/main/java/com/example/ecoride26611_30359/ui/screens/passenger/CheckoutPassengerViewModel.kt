@@ -41,8 +41,8 @@ class CheckoutPassengerViewModel(
             val count = tripDao.hasUserReservedTrip(userId, tripId)
             tripDao.getTripWithDriverById(tripId)?.let { v ->
                 _uiState.update { it.copy(
-                    origem = v.origem,
-                    destino = v.destino,
+                    origem = v.origemLabel,
+                    destino = v.destinoLabel,
                     dataViagem = v.dataHora,
                     nomeCondutor = v.driverName,
                     carro = v.carro,

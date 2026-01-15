@@ -14,24 +14,37 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
-import com.example.ecoride26611_30359.navigation.AppRoutes
 import com.example.ecoride26611_30359.R
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
+import com.example.ecoride26611_30359.data.local.AppDatabase
+import com.example.ecoride26611_30359.navigation.AppRoutes
 
 @Composable
 fun CheckoutDriverScreen(
     navController: NavHostController,
-    origem: String,
-    destino: String,
+    origemId: Int,
+    destinoId: Int,
     data: String,
     lugares: Int
 ) {
+
+    val context = LocalContext.current
+    val checkpointDao = AppDatabase.getDatabase(context).checkpointDao()
+
+    var origemLabel by remember { mutableStateOf("") }
+    var destinoLabel by remember { mutableStateOf("") }
+
+    LaunchedEffect(origemId, destinoId) {
+        origemLabel = checkpointDao.getById(origemId)?.name ?: ""
+        destinoLabel = checkpointDao.getById(destinoId)?.name ?: ""
+    }
+
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
         Text("Resumo da Viagem", fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(20.dp))
 
@@ -41,35 +54,37 @@ fun CheckoutDriverScreen(
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
-            )
-        }
+            )        }
 
         Spacer(Modifier.height(24.dp))
 
         Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("Itinerário", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Text("De: $origem", fontWeight = FontWeight.SemiBold)
-                Text("Para: $destino", fontWeight = FontWeight.SemiBold)
+            Column(Modifier.padding(16.dp)) {
+                Text("Itinerário", fontWeight = FontWeight.Bold)
+                Text("De: $origemLabel")
+                Text("Para: $destinoLabel")
                 Text("Data: $data", color = Color.Gray)
                 Text("Lugares: $lugares", fontWeight = FontWeight.Bold)
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(Modifier.weight(1f))
 
-        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedButton(onClick = { navController.popBackStack() }, modifier = Modifier.weight(1f).height(50.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+
+            OutlinedButton(onClick = { navController.popBackStack() }, Modifier.weight(1f).height(50.dp)) {
                 Text("Editar")
             }
 
             Button(
                 onClick = {
-                    val encodedOri = URLEncoder.encode(origem, StandardCharsets.UTF_8.toString())
-                    val encodedDest = URLEncoder.encode(destino, StandardCharsets.UTF_8.toString())
-                    val encodedData = URLEncoder.encode(data, StandardCharsets.UTF_8.toString())
-
-                    navController.navigate("${AppRoutes.Payment.route}?from=driver&origem=$encodedOri&destino=$encodedDest&data=$encodedData&lugares=$lugares")
+                    navController.navigate(
+                        "${AppRoutes.Payment.route}?" +
+                                "from=driver&tripId=0" +
+                                "&origemId=$origemId&destinoId=$destinoId" +
+                                "&origemLabel=$origemLabel&destinoLabel=$destinoLabel" +
+                                "&data=$data&lugares=$lugares"
+                    )
                 },
                 modifier = Modifier.weight(1f).height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Black)

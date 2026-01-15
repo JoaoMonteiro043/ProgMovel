@@ -26,37 +26,50 @@ class PaymentViewModel(application: Application) : AndroidViewModel(application)
         userId: Int,
         tripId: Int,
         from: String?,
-        origem: String? = null,
-        destino: String? = null,
+        origemCheckpointId: Int = -1,
+        destinoCheckpointId: Int = -1,
+        origemLabel: String? = null,
+        destinoLabel: String? = null,
         data: String? = null,
         lugares: Int = 1,
         onSuccess: () -> Unit
     ) {
         if (selectedPayment != null && userId != -1) {
             viewModelScope.launch {
+
                 if (from == "passenger" && tripId != -1) {
-                    // FLUXO PASSAGEIRO: Reserva lugar
                     val jaReservou = tripDao.hasUserReservedTrip(userId, tripId) > 0
                     if (!jaReservou) {
                         tripDao.reserveSeat(tripId)
-                        tripDao.insertReservation(ReservationEntity(userId = userId, tripId = tripId))
+                        tripDao.insertReservation(
+                            ReservationEntity(userId = userId, tripId = tripId)
+                        )
                     }
-                } else if (from == "driver") {
-                    // FLUXO CONDUTOR: CRIAR VIAGEM E CHAT APENAS AGORA
-                    if (origem != null && destino != null && data != null) {
-                        val newTripId = tripDao.insertTrip(TripEntity(
-                            userId = userId,
-                            origem = origem,
-                            destino = destino,
-                            dataHora = data,
-                            lugaresTotal = lugares,
-                            lugaresDisponiveis = lugares
-                        ))
 
-                        tripDao.insertChat(ChatEntity(
-                            tripId = newTripId.toInt(),
-                            groupName = "Viagem: $origem - $destino"
-                        ))
+                } else if (from == "driver") {
+                    if (origemCheckpointId != -1 && destinoCheckpointId != -1 &&
+                        origemLabel != null && destinoLabel != null && data != null
+                    ) {
+
+                        val newTripId = tripDao.insertTrip(
+                            TripEntity(
+                                userId = userId,
+                                origemCheckpointId = origemCheckpointId,
+                                destinoCheckpointId = destinoCheckpointId,
+                                origemLabel = origemLabel,
+                                destinoLabel = destinoLabel,
+                                dataHora = data,
+                                lugaresTotal = lugares,
+                                lugaresDisponiveis = lugares
+                            )
+                        )
+
+                        tripDao.insertChat(
+                            ChatEntity(
+                                tripId = newTripId.toInt(),
+                                groupName = "Viagem: $origemLabel - $destinoLabel"
+                            )
+                        )
                     }
                 }
                 onSuccess()

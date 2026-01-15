@@ -50,7 +50,7 @@ class MessagesViewModel(
         if (chatId == -1) return
         viewModelScope.launch {
             val trip = tripDao.getTripWithDriverById(chatId)
-            _uiState.update { it.copy(tripDetails = trip, groupName = "Viagem: ${trip?.origem} - ${trip?.destino}") }
+            _uiState.update { it.copy(tripDetails = trip, groupName = "Viagem: ${trip?.origemLabel} - ${trip?.destinoLabel}") }
         }
     }
 

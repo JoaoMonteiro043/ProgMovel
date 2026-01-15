@@ -14,22 +14,22 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.ecoride26611_30359.navigation.AppRoutes
+import java.net.URLDecoder
 
 @Composable
 fun DashboardPassengerScreen(
     navController: NavHostController,
-    loggedUserId: Int, // Adicionado parâmetro para filtrar viagens do próprio user
+    loggedUserId: Int,
     viewModel: DashboardPassengerViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)) {
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("Procurar Viagem", fontSize = 22.sp, fontWeight = FontWeight.Bold)
 
         Spacer(modifier = Modifier.height(10.dp))
 
+        // Inputs (não precisam decode)
         OutlinedTextField(
             value = uiState.origem,
             onValueChange = { viewModel.updateOrigem(it) },
@@ -45,9 +45,7 @@ fun DashboardPassengerScreen(
 
         Button(
             onClick = { viewModel.procurarViagens(loggedUserId) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
         ) {
             Text("Pesquisar", color = Color.White)
@@ -55,6 +53,18 @@ fun DashboardPassengerScreen(
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(uiState.viagensEncontradas) { viagem ->
+
+                // 🔽 decode aqui
+                val origemBonita = remember(viagem.origemLabel) {
+                    URLDecoder.decode(viagem.origemLabel, "UTF-8")
+                }
+                val destinoBonito = remember(viagem.destinoLabel) {
+                    URLDecoder.decode(viagem.destinoLabel, "UTF-8")
+                }
+                val dataBonita = remember(viagem.dataHora) {
+                    URLDecoder.decode(viagem.dataHora, "UTF-8")
+                }
+
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -63,13 +73,19 @@ fun DashboardPassengerScreen(
                         }
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
                             Text(viagem.driverName, fontWeight = FontWeight.Bold, color = Color.Blue)
-                            // Exibe lugares disponíveis logo na lista
-                            Text("Lugares: ${viagem.lugaresDisponiveis}", fontWeight = FontWeight.Bold, color = Color(0xFF4CAF50))
+                            Text(
+                                "Lugares: ${viagem.lugaresDisponiveis}",
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF4CAF50)
+                            )
                         }
-                        Text("De: ${viagem.origem} -> Para: ${viagem.destino}")
-                        Text("Data: ${viagem.dataHora}", fontSize = 12.sp, color = Color.Gray)
+                        Text("De: $origemBonita -> Para: $destinoBonito")
+                        Text("Data: $dataBonita", fontSize = 12.sp, color = Color.Gray)
                     }
                 }
             }

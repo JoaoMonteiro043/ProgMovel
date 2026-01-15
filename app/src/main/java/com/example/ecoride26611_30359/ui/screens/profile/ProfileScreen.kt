@@ -3,6 +3,8 @@ package com.example.ecoride26611_30359.ui.screens.profile
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -47,7 +49,7 @@ fun ProfileScreen(
             Spacer(Modifier.height(30.dp))
 
             uiState.errorMessage?.let {
-                Text(it, color = Color.Red, fontSize = 14.sp)
+                Text(it, color = if(it.contains("sucesso")) Color(0xFF4CAF50) else Color.Red, fontSize = 14.sp)
                 Spacer(Modifier.height(8.dp))
             }
 
@@ -57,33 +59,52 @@ fun ProfileScreen(
 
             HorizontalDivider(Modifier.padding(vertical = 20.dp))
 
-            Text("Veículo & Documentação", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Text("Veículo & Documentação", fontWeight = FontWeight.Bold)
+                if (uiState.hasTrips) {
+                    Spacer(Modifier.width(8.dp))
+                    Icon(Icons.Default.Lock, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(16.dp))
+                }
+            }
+
+            if (uiState.hasTrips) {
+                Text(
+                    "Campos bloqueados pois possui viagens ativas.",
+                    fontSize = 11.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp)
+                )
+            }
 
             Spacer(Modifier.height(10.dp))
             OutlinedTextField(
                 value = carta,
                 onValueChange = { carta = it },
                 label = { Text("Carta de Condução") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.hasTrips // BLOQUEIO AQUI
             )
             Spacer(Modifier.height(10.dp))
             OutlinedTextField(
                 value = carro,
                 onValueChange = { carro = it },
                 label = { Text("Modelo do Carro") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.hasTrips // BLOQUEIO AQUI
             )
             Spacer(Modifier.height(10.dp))
             OutlinedTextField(
                 value = matricula,
                 onValueChange = { matricula = it },
                 label = { Text("Matrícula") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.hasTrips // BLOQUEIO AQUI
             )
 
             Button(
                 onClick = { viewModel.updateProfile(userId, carta, carro, matricula) },
                 modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
+                enabled = !uiState.hasTrips, // Botão também desativa
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Text("Guardar Alterações")

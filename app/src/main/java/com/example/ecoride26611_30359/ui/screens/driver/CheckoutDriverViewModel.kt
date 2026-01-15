@@ -36,8 +36,8 @@ class CheckoutDriverViewModel(application: Application) : AndroidViewModel(appli
             tripDao.getLastTrip().collect { trip ->
                 trip?.let { v ->
                     _uiState.update { it.copy(
-                        origem = v.origem,
-                        destino = v.destino,
+                        origem = v.origemLabel,
+                        destino = v.destinoLabel,
                         numLugares = v.lugaresTotal
                     ) }
                 }

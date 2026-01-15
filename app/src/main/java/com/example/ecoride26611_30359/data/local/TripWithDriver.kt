@@ -4,8 +4,8 @@ data class TripWithDriver(
     val id: Int,
     val userId: Int,
     val driverName: String,
-    val origem: String,
-    val destino: String,
+    val origemLabel: String,
+    val destinoLabel: String,
     val dataHora: String,
     val lugaresDisponiveis: Int,
     // Adicionado para mostrar ao passageiro

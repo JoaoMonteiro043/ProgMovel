@@ -20,9 +20,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.ecoride26611_30359.navigation.AppRoutes
-import java.util.*
 import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
+import java.net.URLDecoder
+import java.util.*
 
 @Composable
 fun DashboardDriverScreen(
@@ -33,6 +33,14 @@ fun DashboardDriverScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
+    val origemBonita = remember(uiState.origemLabel) {
+        URLDecoder.decode(uiState.origemLabel, "UTF-8")
+    }
+
+    val destinoBonito = remember(uiState.destinoLabel) {
+        URLDecoder.decode(uiState.destinoLabel, "UTF-8")
+    }
+
     val calendar = Calendar.getInstance()
     val datePickerDialog = DatePickerDialog(
         context,
@@ -42,7 +50,13 @@ fun DashboardDriverScreen(
         calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)
     )
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { navController.popBackStack() }) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "Voltar")
@@ -53,47 +67,64 @@ fun DashboardDriverScreen(
         Spacer(Modifier.height(20.dp))
 
         uiState.errorMessage?.let {
-            Text(it, color = Color.Red, fontSize = 14.sp, modifier = Modifier.padding(bottom = 8.dp))
+            Text(it, color = Color.Red, fontSize = 14.sp)
         }
 
-        OutlinedTextField(
-            value = uiState.origem,
-            onValueChange = { viewModel.updateOrigem(it) },
-            label = { Text("Origem *") },
-            modifier = Modifier.fillMaxWidth(),
-            isError = uiState.errorMessage != null && uiState.origem.isBlank()
-        )
+        // ORIGEM
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = origemBonita,
+                onValueChange = {},
+                readOnly = true,
+                enabled = false,
+                label = { Text("Origem *") },
+                isError = uiState.errorMessage != null && origemBonita.isBlank(),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clickable { navController.navigate("map/origem") }
+            )
+        }
 
         Spacer(Modifier.height(16.dp))
 
-        OutlinedTextField(
-            value = uiState.destino,
-            onValueChange = { viewModel.updateDestino(it) },
-            label = { Text("Destino *") },
-            modifier = Modifier.fillMaxWidth(),
-            isError = uiState.errorMessage != null && uiState.destino.isBlank()
-        )
+        // DESTINO
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = destinoBonito,
+                onValueChange = {},
+                readOnly = true,
+                enabled = false,
+                label = { Text("Destino *") },
+                isError = uiState.errorMessage != null && destinoBonito.isBlank(),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clickable { navController.navigate("map/destino") }
+            )
+        }
 
         Spacer(Modifier.height(16.dp))
 
-        // Campo de Data que abre o Calendário
+        // DATA
         OutlinedTextField(
             value = uiState.dataHora,
-            onValueChange = { },
-            label = { Text("Data da Viagem *") },
-            modifier = Modifier.fillMaxWidth().clickable { datePickerDialog.show() },
+            onValueChange = {},
             readOnly = true,
-            enabled = false,
+            label = { Text("Data da Viagem *") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { datePickerDialog.show() },
             trailingIcon = {
                 IconButton(onClick = { datePickerDialog.show() }) {
-                    Icon(Icons.Default.CalendarMonth, "Calendário")
+                    Icon(Icons.Default.CalendarMonth, null)
                 }
             },
-            colors = OutlinedTextFieldDefaults.colors(
-                disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                disabledBorderColor = if(uiState.errorMessage != null && uiState.dataHora.isBlank()) Color.Red else MaterialTheme.colorScheme.outline,
-                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            isError = uiState.errorMessage != null && uiState.dataHora.isBlank()
         )
 
         Spacer(Modifier.height(16.dp))
@@ -109,13 +140,11 @@ fun DashboardDriverScreen(
 
         Button(
             onClick = {
-                viewModel.validarDados { ori, dest, data, lug ->
-                    val encodedOri = URLEncoder.encode(ori, StandardCharsets.UTF_8.toString())
-                    val encodedDest = URLEncoder.encode(dest, StandardCharsets.UTF_8.toString())
-                    val encodedData = URLEncoder.encode(data, StandardCharsets.UTF_8.toString())
-
-                    // Navega para o Checkout passando os dados na URL
-                    navController.navigate("${AppRoutes.CheckoutDriver.route}?origem=$encodedOri&destino=$encodedDest&data=$encodedData&lugares=$lug")
+                viewModel.validarDados { oriId, destId, data, lug ->
+                    navController.navigate(
+                        "${AppRoutes.CheckoutDriver.route}?" +
+                                "origemId=$oriId&destinoId=$destId&data=$data&lugares=$lug"
+                    )
                 }
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),

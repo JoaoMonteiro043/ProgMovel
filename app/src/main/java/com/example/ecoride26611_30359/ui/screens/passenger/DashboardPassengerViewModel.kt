@@ -28,8 +28,8 @@ class DashboardPassengerViewModel(application: Application) : AndroidViewModel(a
             // Passamos o ID do user atual para o DAO filtrar "userId != currentUserId"
             tripDao.getAvailableTripsForPassenger(currentUserId).collect { todas ->
                 val filtradas = todas.filter {
-                    it.origem.contains(state.origem, ignoreCase = true) &&
-                            it.destino.contains(state.destino, ignoreCase = true)
+                    it.origemLabel.contains(state.origem, ignoreCase = true) &&
+                            it.destinoLabel.contains(state.destino, ignoreCase = true)
                 }
                 _uiState.update { it.copy(viagensEncontradas = filtradas) }
             }

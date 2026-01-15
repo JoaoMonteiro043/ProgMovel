@@ -21,12 +21,17 @@ fun PaymentScreen(
     from: String?,
     tripId: Int,
     userId: Int,
-    origem: String? = null,
-    destino: String? = null,
+
+    origemCheckpointId: Int = -1,
+    destinoCheckpointId: Int = -1,
+
+    origemLabel: String? = null,
+    destinoLabel: String? = null,
     data: String? = null,
     lugares: Int = 1,
     viewModel: PaymentViewModel = viewModel()
 ) {
+
     Column(
         modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp).padding(top = 60.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -62,6 +67,7 @@ fun PaymentScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         Row(modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp)) {
+
             Button(
                 onClick = { navController.popBackStack() },
                 modifier = Modifier.weight(1f).height(50.dp).padding(end = 6.dp),
@@ -72,7 +78,17 @@ fun PaymentScreen(
 
             Button(
                 onClick = {
-                    viewModel.confirmPayment(userId, tripId, from, origem, destino, data, lugares) {
+                    viewModel.confirmPayment(
+                        userId = userId,
+                        tripId = tripId,
+                        from = from,
+                        origemCheckpointId = origemCheckpointId,
+                        destinoCheckpointId = destinoCheckpointId,
+                        origemLabel = origemLabel,
+                        destinoLabel = destinoLabel,
+                        data = data,
+                        lugares = lugares
+                    ) {
                         navController.navigate(AppRoutes.Home.route) {
                             popUpTo(AppRoutes.Home.route) { inclusive = true }
                         }

@@ -2,6 +2,7 @@ package com.example.ecoride26611_30359.ui.screens.driver
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import com.example.ecoride26611_30359.data.local.AppDatabase
 import kotlinx.coroutines.flow.*
 
 data class DashboardDriverUiState(
@@ -13,24 +14,39 @@ data class DashboardDriverUiState(
 )
 
 class DashboardDriverViewModel(application: Application) : AndroidViewModel(application) {
-    private val _uiState = MutableStateFlow(DashboardDriverUiState())
-    val uiState = _uiState.asStateFlow()
 
-    fun updateOrigem(v: String) = _uiState.update { it.copy(origem = v, errorMessage = null) }
-    fun updateDestino(v: String) = _uiState.update { it.copy(destino = v, errorMessage = null) }
-    fun updateDataHora(v: String) = _uiState.update { it.copy(dataHora = v, errorMessage = null) }
-    fun updateNumLugares(v: String) = _uiState.update { it.copy(numLugares = v, errorMessage = null) }
+    private val tripDao = AppDatabase.getDatabase(application).tripDao()
 
-    // FUNÇÃO CORRIGIDA: Apenas valida, não insere na BD
-    fun validarDados(onSuccess: (String, String, String, Int) -> Unit) {
-        val state = _uiState.value
+    data class UiState(
+        val origemCheckpointId: Int? = null,
+        val destinoCheckpointId: Int? = null,
+        val origemLabel: String = "",
+        val destinoLabel: String = "",
+        val dataHora: String = "",
+        val numLugares: String = "",
+        val errorMessage: String? = null
+    )
 
-        if (state.origem.isBlank() || state.destino.isBlank() || state.dataHora.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Por favor, preencha todos os campos obrigatórios (*)") }
+    private val _uiState = MutableStateFlow(UiState())
+    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
+
+    fun updateOrigem(id: Int, label: String) {
+        _uiState.update { it.copy(origemCheckpointId = id, origemLabel = label) }
+    }
+
+    fun updateDestino(id: Int, label: String) {
+        _uiState.update { it.copy(destinoCheckpointId = id, destinoLabel = label) }
+    }
+
+    fun updateDataHora(v: String) = _uiState.update { it.copy(dataHora = v) }
+    fun updateNumLugares(v: String) = _uiState.update { it.copy(numLugares = v) }
+
+    fun validarDados(onSuccess: (Int, Int, String, Int) -> Unit) {
+        val s = _uiState.value
+        if (s.origemCheckpointId == null || s.destinoCheckpointId == null || s.dataHora.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Preencha todos os campos") }
             return
         }
-
-        val lotacao = state.numLugares.toIntOrNull() ?: 1
-        onSuccess(state.origem, state.destino, state.dataHora, lotacao)
+        onSuccess(s.origemCheckpointId, s.destinoCheckpointId, s.dataHora, s.numLugares.toIntOrNull() ?: 1)
     }
 }

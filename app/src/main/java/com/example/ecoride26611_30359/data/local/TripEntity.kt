@@ -7,13 +7,16 @@ import androidx.room.PrimaryKey
 data class TripEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val userId: Int,
-    val origem: String,
-    val destino: String,
+
+    // agora só checkpoints
+    val origemCheckpointId: Int,
+    val destinoCheckpointId: Int,
+
+    // nomes bonitos (só para UI)
+    val origemLabel: String,
+    val destinoLabel: String,
+
     val dataHora: String,
     val lugaresTotal: Int,
-    val lugaresDisponiveis: Int,
-    val latOrigem: Double = 0.0,
-    val lngOrigem: Double = 0.0,
-    val latDestino: Double = 0.0,
-    val lngDestino: Double = 0.0
+    val lugaresDisponiveis: Int
 )

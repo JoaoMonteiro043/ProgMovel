@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 
+
 // Importação das Screens
 import com.example.ecoride26611_30359.ui.screens.login.LoginScreen
 import com.example.ecoride26611_30359.ui.screens.signin.SignInScreen
@@ -22,6 +23,9 @@ import com.example.ecoride26611_30359.ui.screens.chat.ChatScreen
 import com.example.ecoride26611_30359.ui.screens.chat.MessagesScreen
 import com.example.ecoride26611_30359.ui.screens.profile.ProfileScreen
 import com.example.ecoride26611_30359.ui.screens.achievements.AchievementsScreen
+import com.example.ecoride26611_30359.ui.screens.driver.MapPickerScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ecoride26611_30359.ui.screens.driver.DashboardDriverViewModel
 
 sealed class AppRoutes(val route: String) {
     object Login : AppRoutes("login")
@@ -48,23 +52,33 @@ fun AppNavigation(navController: NavHostController) {
         }
         composable(AppRoutes.SignIn.route) { SignInScreen(navController) }
         composable(AppRoutes.Home.route) { HomeScreen(navController, loggedUserId) }
-        composable(AppRoutes.DashboardDriver.route) { DashboardDriverScreen(navController, loggedUserId) }
-        composable(AppRoutes.DashboardPassenger.route) { DashboardPassengerScreen(navController, loggedUserId) }
+        composable(AppRoutes.DashboardDriver.route) {
+            DashboardDriverScreen(
+                navController,
+                loggedUserId
+            )
+        }
+        composable(AppRoutes.DashboardPassenger.route) {
+            DashboardPassengerScreen(
+                navController,
+                loggedUserId
+            )
+        }
 
-        // Checkout Driver com params
+        // Checkout Driver
         composable(
-            route = AppRoutes.CheckoutDriver.route + "?origem={origem}&destino={destino}&data={data}&lugares={lugares}",
+            route = AppRoutes.CheckoutDriver.route + "?origemId={origemId}&destinoId={destinoId}&data={data}&lugares={lugares}",
             arguments = listOf(
-                navArgument("origem") { type = NavType.StringType; defaultValue = "" },
-                navArgument("destino") { type = NavType.StringType; defaultValue = "" },
-                navArgument("data") { type = NavType.StringType; defaultValue = "" },
-                navArgument("lugares") { type = NavType.IntType; defaultValue = 1 }
+                navArgument("origemId") { type = NavType.IntType },
+                navArgument("destinoId") { type = NavType.IntType },
+                navArgument("data") { type = NavType.StringType },
+                navArgument("lugares") { type = NavType.IntType }
             )
         ) { backStackEntry ->
             CheckoutDriverScreen(
                 navController = navController,
-                origem = backStackEntry.arguments?.getString("origem") ?: "",
-                destino = backStackEntry.arguments?.getString("destino") ?: "",
+                origemId = backStackEntry.arguments?.getInt("origemId") ?: 0,
+                destinoId = backStackEntry.arguments?.getInt("destinoId") ?: 0,
                 data = backStackEntry.arguments?.getString("data") ?: "",
                 lugares = backStackEntry.arguments?.getInt("lugares") ?: 1
             )
@@ -78,14 +92,23 @@ fun AppNavigation(navController: NavHostController) {
             CheckoutPassengerScreen(navController, loggedUserId, tripId)
         }
 
-        // Pagamento com suporte a criação de viagem
+        // Payment
         composable(
-            route = AppRoutes.Payment.route + "?from={from}&tripId={tripId}&origem={origem}&destino={destino}&data={data}&lugares={lugares}",
+            route = AppRoutes.Payment.route +
+                    "?from={from}&tripId={tripId}" +
+                    "&origemId={origemId}&destinoId={destinoId}" +
+                    "&origemLabel={origemLabel}&destinoLabel={destinoLabel}" +
+                    "&data={data}&lugares={lugares}",
             arguments = listOf(
-                navArgument("from") { type = NavType.StringType; defaultValue = "home" },
+                navArgument("from") { type = NavType.StringType },
                 navArgument("tripId") { type = NavType.IntType; defaultValue = -1 },
-                navArgument("origem") { type = NavType.StringType; nullable = true },
-                navArgument("destino") { type = NavType.StringType; nullable = true },
+
+                navArgument("origemId") { type = NavType.IntType; defaultValue = -1 },
+                navArgument("destinoId") { type = NavType.IntType; defaultValue = -1 },
+
+                navArgument("origemLabel") { type = NavType.StringType; nullable = true },
+                navArgument("destinoLabel") { type = NavType.StringType; nullable = true },
+
                 navArgument("data") { type = NavType.StringType; nullable = true },
                 navArgument("lugares") { type = NavType.IntType; defaultValue = 1 }
             )
@@ -95,8 +118,12 @@ fun AppNavigation(navController: NavHostController) {
                 from = backStackEntry.arguments?.getString("from"),
                 tripId = backStackEntry.arguments?.getInt("tripId") ?: -1,
                 userId = loggedUserId,
-                origem = backStackEntry.arguments?.getString("origem"),
-                destino = backStackEntry.arguments?.getString("destino"),
+
+                origemCheckpointId = backStackEntry.arguments?.getInt("origemId") ?: -1,
+                destinoCheckpointId = backStackEntry.arguments?.getInt("destinoId") ?: -1,
+
+                origemLabel = backStackEntry.arguments?.getString("origemLabel"),
+                destinoLabel = backStackEntry.arguments?.getString("destinoLabel"),
                 data = backStackEntry.arguments?.getString("data"),
                 lugares = backStackEntry.arguments?.getInt("lugares") ?: 1
             )
@@ -109,5 +136,32 @@ fun AppNavigation(navController: NavHostController) {
         ) { MessagesScreen(navController, loggedUserId) }
         composable(AppRoutes.Profile.route) { ProfileScreen(navController, loggedUserId) }
         composable(AppRoutes.Achievements.route) { AchievementsScreen() }
+
+        // MOVED INSIDE THE NAVHOST BLOCK:
+        composable(
+            route = "map/{mode}",
+            arguments = listOf(navArgument("mode") { type = NavType.StringType })
+        ) { backStack ->
+
+            val parentEntry = remember(backStack) {
+                navController.getBackStackEntry(AppRoutes.DashboardDriver.route)
+            }
+
+            val driverViewModel: DashboardDriverViewModel = viewModel(parentEntry)
+
+            val mode = backStack.arguments?.getString("mode")!!
+
+            MapPickerScreen(
+                navController = navController,
+                mode = mode
+            ) { checkpointId, checkpointName ->
+
+                if (mode == "origem") {
+                    driverViewModel.updateOrigem(checkpointId, checkpointName)
+                } else {
+                    driverViewModel.updateDestino(checkpointId, checkpointName)
+                }
+            }
+        } // This brace now correctly closes the NavHost
     }
 }

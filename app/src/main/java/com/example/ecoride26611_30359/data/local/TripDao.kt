@@ -1,14 +1,11 @@
 package com.example.ecoride26611_30359.data.local
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Transaction
+import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TripDao {
+
     @Insert
     suspend fun insertTrip(trip: TripEntity): Long
 
@@ -21,7 +18,6 @@ interface TripDao {
     @Insert
     suspend fun insertMessage(message: MessageEntity)
 
-    // FUNÇÃO PARA CANCELAR VIAGEM (Elimina em cascata se configurado ou manualmente)
     @Query("DELETE FROM trips WHERE id = :tripId")
     suspend fun deleteTrip(tripId: Int)
 
@@ -42,6 +38,7 @@ interface TripDao {
         deleteTrip(tripId)
     }
 
+    // CHAT
     @Query("""
         SELECT DISTINCT chats.* FROM chats 
         INNER JOIN trips ON chats.tripId = trips.id
@@ -67,20 +64,39 @@ interface TripDao {
     @Query("SELECT COUNT(*) FROM reservations WHERE userId = :userId AND tripId = :tripId")
     suspend fun hasUserReservedTrip(userId: Int, tripId: Int): Int
 
+    // PASSAGEIRO (sem texto)
     @Query("""
-        SELECT trips.id, trips.userId, users.name as driverName, trips.origem, trips.destino, trips.dataHora, 
-               trips.lugaresDisponiveis, users.carro, users.matricula 
-        FROM trips 
+        SELECT 
+            trips.id,
+            trips.userId,
+            users.name AS driverName,
+            trips.origemLabel,
+            trips.destinoLabel,
+            trips.dataHora,
+            trips.lugaresDisponiveis,
+            users.carro,
+            users.matricula
+        FROM trips
         INNER JOIN users ON trips.userId = users.id
-        WHERE trips.lugaresDisponiveis > 0 AND trips.userId != :currentUserId
+        WHERE trips.lugaresDisponiveis > 0
+          AND trips.userId != :currentUserId
     """)
     fun getAvailableTripsForPassenger(currentUserId: Int): Flow<List<TripWithDriver>>
 
+    // DETALHE DA VIAGEM
     @Query("""
-        SELECT trips.id, trips.userId, users.name as driverName, trips.origem, trips.destino, trips.dataHora, 
-               trips.lugaresDisponiveis, users.carro, users.matricula 
-        FROM trips 
-        INNER JOIN users ON trips.userId = users.id 
+        SELECT 
+            trips.id,
+            trips.userId,
+            users.name AS driverName,
+            trips.origemLabel,
+            trips.destinoLabel,
+            trips.dataHora,
+            trips.lugaresDisponiveis,
+            users.carro,
+            users.matricula
+        FROM trips
+        INNER JOIN users ON trips.userId = users.id
         WHERE trips.id = :tripId LIMIT 1
     """)
     suspend fun getTripWithDriverById(tripId: Int): TripWithDriver?
