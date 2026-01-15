@@ -15,12 +15,18 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     var userName by mutableStateOf("Utilizador")
         private set
 
+    // Novo estado para verificar requisitos de condutor
+    var canCreateTrip by mutableStateOf(false)
+        private set
+
     fun carregarUsuario(userId: Int) {
         if (userId == -1) return
         viewModelScope.launch {
             val user = userDao.getUserById(userId)
             user?.let {
                 userName = it.name
+                // Verifica se tem Carta e Carro preenchidos
+                canCreateTrip = !it.cartaConducao.isNullOrBlank() && !it.carro.isNullOrBlank()
             }
         }
     }

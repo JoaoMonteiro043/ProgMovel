@@ -5,8 +5,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,8 +27,36 @@ fun HomeScreen(
     userId: Int,
     viewModel: HomeViewModel = viewModel()
 ) {
+    // Estado local para controlar a visibilidade do aviso
+    var showProfileError by remember { mutableStateOf(false) }
+
     LaunchedEffect(userId) {
         viewModel.carregarUsuario(userId)
+    }
+
+    // Alerta de Erro de Perfil
+    if (showProfileError) {
+        AlertDialog(
+            onDismissRequest = { showProfileError = false },
+            title = { Text("Perfil Incompleto") },
+            text = { Text("Para criar uma viagem, deve primeiro registar a sua Carta de Condução e o seu Veículo no Perfil.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showProfileError = false
+                        navController.navigate(AppRoutes.Profile.route)
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
+                ) {
+                    Text("Ir para Perfil")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showProfileError = false }) {
+                    Text("Cancelar", color = Color.Gray)
+                }
+            }
+        )
     }
 
     Column(
@@ -46,7 +75,6 @@ fun HomeScreen(
             fontWeight = FontWeight.Medium
         )
 
-        // COR ALTERADA PARA PRETO AQUI
         Text(
             text = viewModel.userName.uppercase(),
             fontSize = 32.sp,
@@ -56,13 +84,16 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(80.dp))
 
+        // CARD CRIAR VIAGEM (Com validação)
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(180.dp)
                 .clickable {
-                    viewModel.onNavigateToDriver {
+                    if (viewModel.canCreateTrip) {
                         navController.navigate(AppRoutes.DashboardDriver.route)
+                    } else {
+                        showProfileError = true
                     }
                 },
             shape = RoundedCornerShape(20.dp),
@@ -90,9 +121,7 @@ fun HomeScreen(
                 .fillMaxWidth()
                 .height(180.dp)
                 .clickable {
-                    viewModel.onNavigateToPassenger {
-                        navController.navigate(AppRoutes.DashboardPassenger.route)
-                    }
+                    navController.navigate(AppRoutes.DashboardPassenger.route)
                 },
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD))
