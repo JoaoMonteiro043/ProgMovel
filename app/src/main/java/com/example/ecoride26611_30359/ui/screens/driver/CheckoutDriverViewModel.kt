@@ -10,19 +10,23 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.ecoride26611_30359.utils.GeoUtils
 
 data class CheckoutDriverUiState(
     val origem: String = "",
     val destino: String = "",
     val numLugares: Int = 0, // Adicionado campo
     val tempoEstimado: String = "45 mins",
-    val distancia: String = "75 km",
+    val distanciaKm: Double? = null,
     val mapaImagem: Int = R.drawable.map
 )
 
 class CheckoutDriverViewModel(application: Application) : AndroidViewModel(application) {
 
     private val tripDao = AppDatabase.getDatabase(application).tripDao()
+
+    private val checkpointDao =
+        AppDatabase.getDatabase(application).checkpointDao()
 
     private val _uiState = MutableStateFlow(CheckoutDriverUiState())
     val uiState: StateFlow<CheckoutDriverUiState> = _uiState.asStateFlow()
@@ -35,11 +39,27 @@ class CheckoutDriverViewModel(application: Application) : AndroidViewModel(appli
         viewModelScope.launch {
             tripDao.getLastTrip().collect { trip ->
                 trip?.let { v ->
-                    _uiState.update { it.copy(
-                        origem = v.origemLabel,
-                        destino = v.destinoLabel,
-                        numLugares = v.lugaresTotal
-                    ) }
+
+                    val origem = checkpointDao.getById(v.origemCheckpointId)
+                    val destino = checkpointDao.getById(v.destinoCheckpointId)
+
+                    val distancia = if (origem != null && destino != null) {
+                        GeoUtils.distanceKm(
+                            origem.lat,
+                            origem.lng,
+                            destino.lat,
+                            destino.lng
+                        )
+                    } else null
+
+                    _uiState.update {
+                        it.copy(
+                            origem = v.origemLabel,
+                            destino = v.destinoLabel,
+                            numLugares = v.lugaresTotal,
+                            distanciaKm = distancia
+                        )
+                    }
                 }
             }
         }

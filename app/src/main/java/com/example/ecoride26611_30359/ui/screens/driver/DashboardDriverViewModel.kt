@@ -23,6 +23,7 @@ class DashboardDriverViewModel(application: Application) : AndroidViewModel(appl
         val origemLabel: String = "",
         val destinoLabel: String = "",
         val dataHora: String = "",
+        val horaPartida: String = "",
         val numLugares: String = "",
         val errorMessage: String? = null
     )

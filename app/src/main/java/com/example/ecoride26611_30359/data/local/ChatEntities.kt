@@ -5,10 +5,12 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "chats")
 data class ChatEntity(
-    @PrimaryKey val tripId: Int, // O ID do Chat é o mesmo ID da Viagem
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val tripId: Int,
     val groupName: String,
-    val lastMessage: String = "Grupo criado!",
-    val lastMessageTime: String = ""
+    val driverName: String = "",
+    val driverCar: String = "",
+    val driverPlate: String = ""
 )
 
 @Entity(tableName = "messages")

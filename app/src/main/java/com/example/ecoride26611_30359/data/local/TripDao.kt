@@ -2,6 +2,7 @@ package com.example.ecoride26611_30359.data.local
 
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
+import com.example.ecoride26611_30359.data.local.TripEntity
 
 @Dao
 interface TripDao {
@@ -67,19 +68,18 @@ interface TripDao {
     // PASSAGEIRO (sem texto)
     @Query("""
         SELECT 
-            trips.id,
-            trips.userId,
-            users.name AS driverName,
-            trips.origemLabel,
-            trips.destinoLabel,
-            trips.dataHora,
-            trips.lugaresDisponiveis,
-            users.carro,
-            users.matricula
-        FROM trips
-        INNER JOIN users ON trips.userId = users.id
-        WHERE trips.lugaresDisponiveis > 0
-          AND trips.userId != :currentUserId
+        trips.id,
+        trips.userId,
+        users.name as driverName,
+        trips.origemLabel, 
+        trips.destinoLabel,
+        trips.dataHora,
+        trips.lugaresDisponiveis,
+        users.carro,
+        users.matricula
+       FROM trips
+       INNER JOIN users ON trips.userId = users.id
+       WHERE trips.lugaresDisponiveis > 0 AND trips.userId != :currentUserId
     """)
     fun getAvailableTripsForPassenger(currentUserId: Int): Flow<List<TripWithDriver>>
 
@@ -88,7 +88,7 @@ interface TripDao {
         SELECT 
             trips.id,
             trips.userId,
-            users.name AS driverName,
+            users.name as driverName,
             trips.origemLabel,
             trips.destinoLabel,
             trips.dataHora,
@@ -100,6 +100,25 @@ interface TripDao {
         WHERE trips.id = :tripId LIMIT 1
     """)
     suspend fun getTripWithDriverById(tripId: Int): TripWithDriver?
+
+    @Query("""
+    SELECT DISTINCT
+        chats.id,
+        chats.tripId,
+        chats.groupName,
+        chats.driverName,
+        chats.driverCar,
+        chats.driverPlate,
+        trips.dataHora AS dataHora
+    FROM chats
+    INNER JOIN trips ON chats.tripId = trips.id
+    LEFT JOIN reservations ON trips.id = reservations.tripId
+    WHERE trips.userId = :userId OR reservations.userId = :userId
+""")
+    fun getChatsWithTripInfoForUser(userId: Int): Flow<List<ChatWithTripInfo>>
+
+    @Query("SELECT * FROM trips WHERE id = :tripId LIMIT 1")
+    suspend fun getTripById(tripId: Int): TripEntity?
 
     @Query("UPDATE trips SET lugaresDisponiveis = lugaresDisponiveis - 1 WHERE id = :tripId AND lugaresDisponiveis > 0")
     suspend fun reserveSeat(tripId: Int)

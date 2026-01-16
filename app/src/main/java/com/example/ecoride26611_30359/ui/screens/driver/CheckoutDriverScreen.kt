@@ -19,6 +19,7 @@ import androidx.navigation.NavHostController
 import com.example.ecoride26611_30359.R
 import com.example.ecoride26611_30359.data.local.AppDatabase
 import com.example.ecoride26611_30359.navigation.AppRoutes
+import com.example.ecoride26611_30359.utils.GeoUtils
 
 @Composable
 fun CheckoutDriverScreen(
@@ -34,10 +35,23 @@ fun CheckoutDriverScreen(
 
     var origemLabel by remember { mutableStateOf("") }
     var destinoLabel by remember { mutableStateOf("") }
+    var distanciaKm by remember { mutableStateOf<Double?>(null) }
 
     LaunchedEffect(origemId, destinoId) {
-        origemLabel = checkpointDao.getById(origemId)?.name ?: ""
-        destinoLabel = checkpointDao.getById(destinoId)?.name ?: ""
+        val origem = checkpointDao.getById(origemId)
+        val destino = checkpointDao.getById(destinoId)
+
+        if (origem != null && destino != null) {
+            origemLabel = origem.name
+            destinoLabel = destino.name
+
+            distanciaKm = GeoUtils.distanceKm(
+                origem.lat,
+                origem.lng,
+                destino.lat,
+                destino.lng
+            )
+        }
     }
 
     Column(
@@ -48,23 +62,40 @@ fun CheckoutDriverScreen(
         Text("Resumo da Viagem", fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(20.dp))
 
-        Card(modifier = Modifier.fillMaxWidth().height(200.dp)) {
+// 🔹 CARD DO MAPA
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+        ) {
             Image(
                 painter = painterResource(id = R.drawable.map),
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
-            )        }
+            )
+        }
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(20.dp))
 
-        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))) {
+// 🔹 CARD DA INFORMAÇÃO
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
+        ) {
             Column(Modifier.padding(16.dp)) {
                 Text("Itinerário", fontWeight = FontWeight.Bold)
                 Text("De: $origemLabel")
                 Text("Para: $destinoLabel")
                 Text("Data: $data", color = Color.Gray)
                 Text("Lugares: $lugares", fontWeight = FontWeight.Bold)
+
+                distanciaKm?.let {
+                    Text(
+                        text = "Distância: %.1f km".format(it),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
 
@@ -72,7 +103,10 @@ fun CheckoutDriverScreen(
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
 
-            OutlinedButton(onClick = { navController.popBackStack() }, Modifier.weight(1f).height(50.dp)) {
+            OutlinedButton(
+                onClick = { navController.popBackStack() },
+                Modifier.weight(1f).height(50.dp)
+            ) {
                 Text("Editar")
             }
 

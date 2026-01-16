@@ -8,15 +8,16 @@ data class TripEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val userId: Int,
 
-    // agora só checkpoints
+    //só os checkpoints
     val origemCheckpointId: Int,
     val destinoCheckpointId: Int,
 
-    // nomes bonitos (só para UI)
+
     val origemLabel: String,
     val destinoLabel: String,
 
     val dataHora: String,
+    //val horaPartida: String,
     val lugaresTotal: Int,
     val lugaresDisponiveis: Int
 )

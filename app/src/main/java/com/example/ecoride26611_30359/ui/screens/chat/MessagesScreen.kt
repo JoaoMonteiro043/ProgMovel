@@ -5,21 +5,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -45,25 +39,35 @@ fun MessagesScreen(
 
         AlertDialog(
             onDismissRequest = { showDetails = false },
-            confirmButton = {
-                TextButton(onClick = { showDetails = false }) { Text("Fechar") }
-            },
+            confirmButton = { TextButton(onClick = { showDetails = false }) { Text("Fechar") } },
             dismissButton = {
                 if (isDriver) {
-                    TextButton(onClick = { viewModel.cancelTrip { showDetails = false; navController.popBackStack() } }) {
-                        Text("CANCELAR VIAGEM", color = Color.Red, fontWeight = FontWeight.Bold)
-                    }
+                    TextButton(
+                        onClick = { viewModel.cancelTrip { showDetails = false; navController.popBackStack() } }
+                    ) { Text("CANCELAR VIAGEM", color = Color.Red, fontWeight = FontWeight.Bold) }
                 } else {
-                    TextButton(onClick = { viewModel.leaveTrip(loggedUserId) { showDetails = false; navController.popBackStack() } }) {
-                        Text("Sair da Viagem", color = MaterialTheme.colorScheme.error)
-                    }
+                    TextButton(
+                        onClick = { viewModel.leaveTrip(loggedUserId) { showDetails = false; navController.popBackStack() } }
+                    ) { Text("Sair da Viagem", color = MaterialTheme.colorScheme.error) }
                 }
             },
-            title = { Text("Resumo da Boleia") },
+            title = { Text("Resumo da Viagem") },
             text = {
-                Column {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("De: ${uiState.tripDetails?.origemLabel}", fontWeight = FontWeight.Bold)
                     Text("Para: ${uiState.tripDetails?.destinoLabel}", fontWeight = FontWeight.Bold)
+
+                    Spacer(Modifier.height(8.dp))
+
+                    // NOVO: carro + matrícula
+                    if (uiState.tripDetails?.carro?.isNotBlank() == true) {
+                        Text(
+                            "🚗 ${uiState.tripDetails?.carro} • ${uiState.tripDetails?.matricula}",
+                            fontSize = 11.sp,
+                            color = Color.Gray
+                        )
+                    }
+
                 }
             }
         )
@@ -71,10 +75,21 @@ fun MessagesScreen(
 
     if (showParticipants) {
         ModalBottomSheet(onDismissRequest = { showParticipants = false }, sheetState = sheetState) {
-            Column(modifier = Modifier.fillMaxWidth().padding(16.dp).padding(bottom = 32.dp)) {
-                Text("Participantes", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                uiState.participants.forEach { user ->
-                    ListItem(headlineContent = { Text(user.name) })
+            Column(Modifier.fillMaxWidth().padding(16.dp).padding(bottom = 32.dp)) {
+                Text(
+                    "Participantes",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+
+                uiState.participants.forEachIndexed { index, user ->
+                    val label = if (index == 0) " (Condutor)" else ""
+
+                    ListItem(
+                        headlineContent = {
+                            Text("${user.name}$label")
+                        }
+                    )
                 }
             }
         }
@@ -86,24 +101,28 @@ fun MessagesScreen(
                 title = {
                     Column(modifier = Modifier.clickable { viewModel.loadParticipants(); showParticipants = true }) {
                         Text(uiState.groupName, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+
                         Text("Ver participantes", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
                     }
                 },
                 actions = {
                     IconButton(onClick = { showDetails = true }) {
-                        Icon(Icons.Default.Info, contentDescription = "Detalhes")
+                        Icon(Icons.Default.Info, null)
                     }
                 }
             )
         },
         bottomBar = {
             Surface(tonalElevation = 8.dp) {
-                Row(modifier = Modifier.fillMaxWidth().padding(8.dp).navigationBarsPadding().imePadding(), verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    Modifier.fillMaxWidth().padding(8.dp).navigationBarsPadding().imePadding(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     TextField(
                         value = uiState.currentInput,
                         onValueChange = { viewModel.onInputChange(it) },
@@ -111,17 +130,15 @@ fun MessagesScreen(
                         placeholder = { Text("Mensagem...") }
                     )
                     IconButton(onClick = { viewModel.sendMessage(loggedUserId) }) {
-                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Enviar")
+                        Icon(Icons.AutoMirrored.Filled.Send, null)
                     }
                 }
             }
         }
     ) { padding ->
-        Box(modifier = Modifier.padding(padding)) {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(uiState.messages) { message ->
-                    MessageBubble(message, loggedUserId)
-                }
+        LazyColumn(Modifier.fillMaxSize().padding(padding)) {
+            items(uiState.messages) { message ->
+                MessageBubble(message, loggedUserId)
             }
         }
     }
@@ -130,9 +147,12 @@ fun MessagesScreen(
 @Composable
 fun MessageBubble(message: MessageEntity, loggedUserId: Int) {
     val isMe = message.senderId == loggedUserId
-    Box(modifier = Modifier.fillMaxWidth().padding(8.dp), contentAlignment = if (isMe) Alignment.CenterEnd else Alignment.CenterStart) {
-        Surface(color = if (isMe) MaterialTheme.colorScheme.primary else Color.LightGray, shape = RoundedCornerShape(8.dp)) {
-            Text(message.text, modifier = Modifier.padding(8.dp), color = if (isMe) Color.White else Color.Black)
+    Box(Modifier.fillMaxWidth().padding(8.dp), if (isMe) Alignment.CenterEnd else Alignment.CenterStart) {
+        Surface(
+            color = if (isMe) MaterialTheme.colorScheme.primary else Color.LightGray,
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text(message.text, Modifier.padding(8.dp), color = if (isMe) Color.White else Color.Black)
         }
     }
 }

@@ -34,46 +34,54 @@ class PaymentViewModel(application: Application) : AndroidViewModel(application)
         lugares: Int = 1,
         onSuccess: () -> Unit
     ) {
-        if (selectedPayment != null && userId != -1) {
-            viewModelScope.launch {
+        if (selectedPayment == null || userId == -1) return
 
-                if (from == "passenger" && tripId != -1) {
-                    val jaReservou = tripDao.hasUserReservedTrip(userId, tripId) > 0
-                    if (!jaReservou) {
-                        tripDao.reserveSeat(tripId)
-                        tripDao.insertReservation(
-                            ReservationEntity(userId = userId, tripId = tripId)
-                        )
-                    }
+        viewModelScope.launch {
 
-                } else if (from == "driver") {
-                    if (origemCheckpointId != -1 && destinoCheckpointId != -1 &&
-                        origemLabel != null && destinoLabel != null && data != null
-                    ) {
-
-                        val newTripId = tripDao.insertTrip(
-                            TripEntity(
-                                userId = userId,
-                                origemCheckpointId = origemCheckpointId,
-                                destinoCheckpointId = destinoCheckpointId,
-                                origemLabel = origemLabel,
-                                destinoLabel = destinoLabel,
-                                dataHora = data,
-                                lugaresTotal = lugares,
-                                lugaresDisponiveis = lugares
-                            )
-                        )
-
-                        tripDao.insertChat(
-                            ChatEntity(
-                                tripId = newTripId.toInt(),
-                                groupName = "Viagem: $origemLabel - $destinoLabel"
-                            )
-                        )
-                    }
+            // PASSAGEIRO → só reserva lugar
+            if (from == "passenger" && tripId != -1) {
+                val jaReservou = tripDao.hasUserReservedTrip(userId, tripId) > 0
+                if (!jaReservou) {
+                    tripDao.reserveSeat(tripId)
+                    tripDao.insertReservation(ReservationEntity(userId = userId, tripId = tripId))
                 }
-                onSuccess()
             }
+
+            // CONDUTOR → cria viagem + chat
+            else if (from == "driver") {
+                if (origemCheckpointId != -1 && destinoCheckpointId != -1 &&
+                    origemLabel != null && destinoLabel != null && data != null) {
+
+                    val newTripId = tripDao.insertTrip(
+                        TripEntity(
+                            userId = userId,
+                            origemCheckpointId = origemCheckpointId,
+                            destinoCheckpointId = destinoCheckpointId,
+                            origemLabel = origemLabel,
+                            destinoLabel = destinoLabel,
+                            dataHora = data,
+                            lugaresTotal = lugares,
+                            lugaresDisponiveis = lugares
+                        )
+                    ).toInt()
+
+                    val driverInfo = tripDao.getTripWithDriverById(newTripId)
+
+                    tripDao.insertChat(
+                        ChatEntity(
+                            tripId = newTripId,
+                            groupName = "Viagem: $origemLabel - $destinoLabel",
+                            driverName = driverInfo?.driverName ?: "",
+                            driverCar = driverInfo?.carro ?: "",
+                            driverPlate = driverInfo?.matricula ?: ""
+                        )
+                    )
+                }
+            }
+
+            onSuccess()
         }
     }
+
 }
+
